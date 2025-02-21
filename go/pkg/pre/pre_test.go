@@ -31,5 +31,4 @@ func TestPreFullFlow(t *testing.T) {
 	decryptedMessage := scheme.DecryptFirstLevel(firstLevelCipherText, keyPairBob.SecretKey)
 
 	require.Equal(t, message, decryptedMessage)
-
 }

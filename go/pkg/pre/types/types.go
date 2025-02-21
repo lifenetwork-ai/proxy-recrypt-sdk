@@ -28,22 +28,22 @@ type PublicKey struct {
 
 // SecretKey represents the secret key components for the PRE scheme
 type SecretKey struct {
-	First  *big.Int
-	Second *big.Int
+	First  *big.Int // First component of the secret key, used for the first level encryption
+	Second *big.Int // // Second component of the secret key, used for the second level encryption
 }
 
-// FirstLevelCipherText represents the second level encrypted message components
+// FirstLevelCipherText represents the first level encrypted message components
 type FirstLevelCipherText struct {
-	First            *GT
-	Second           *GT
-	EncryptedMessage string
+	First            *GT    // First component of the ciphertext
+	Second           *GT    // Second component of the ciphertext
+	EncryptedMessage string // The encrypted message, encrypted with the symmetric key
 }
 
-// SecondLevelCipherText represents the first level encrypted message components
+// SecondLevelCipherText represents the second level encrypted message components
 type SecondLevelCipherText struct {
-	First            *G1Affine
-	Second           *GT
-	EncryptedMessage string
+	First            *G1Affine // First component of the ciphertext
+	Second           *GT       // Second component of the ciphertext
+	EncryptedMessage string    // The encrypted message, encrypted with the symmetric key
 }
 
 // PreScheme defines the interface for proxy re-encryption operations

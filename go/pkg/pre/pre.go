@@ -5,6 +5,7 @@ import (
 	"math/big"
 
 	"github.com/consensys/gnark-crypto/ecc/bn254"
+	"github.com/tuantran-genetica/human-network-crypto-lib/pkg/crypto"
 	"github.com/tuantran-genetica/human-network-crypto-lib/pkg/pre/types"
 	"github.com/tuantran-genetica/human-network-crypto-lib/pkg/pre/utils"
 )
@@ -28,18 +29,6 @@ func NewPreScheme() *preScheme {
 	}
 }
 
-// GenerateRandomSymmetricKey generates a random symmetric key for the PRE scheme.
-// It returns a random scalar value.
-
-func (p *preScheme) GenerateRandomSymmetricKeyFromGT(keySize int) (types.GT, []byte, error) {
-	randomGT, _ := new(types.GT).SetRandom()
-	randomGTBytes := randomGT.Bytes()
-	symmetricKey := randomGTBytes[:keySize]
-
-	return *randomGT, symmetricKey, nil
-
-}
-
 // GenerateReEncryptionKey generates a re-encryption key indicate A->B relation for the PRE scheme.
 // It takes the public key of A and a portion of secret key of B as input.
 // The re-encryption key is a point in G1 group.
@@ -55,15 +44,19 @@ func (p *preScheme) GenerateReEncryptionKey(secretA *types.Int, publicB *types.G
 func (p *preScheme) SecondLevelEncryption(pubkeyA *types.GT, secretB *types.Int, message string, scalar *types.Int) *types.SecondLevelCipherText {
 
 	// generate random symmetric key
-	keyGT, key, _ := p.GenerateRandomSymmetricKeyFromGT(32)
+	keyGT, key, _ := crypto.GenerateRandomSymmetricKeyFromGT(32)
 	// encrypt the message
-	encryptedMessage, _ := utils.SymmetricEncrypt(message, key)
+	encryptedMessage, err := crypto.EncryptAESGCM(message, key)
+
+	if err != nil {
+		panic("error in encryption")
+	}
 
 	first := p.G1.ScalarMultiplicationBase(scalar)
 
 	secondTemp := new(bn254.GT).Exp(*pubkeyA, scalar)
 
-	second := new(bn254.GT).Mul(secondTemp, &keyGT)
+	second := new(bn254.GT).Mul(secondTemp, keyGT)
 
 	return &types.SecondLevelCipherText{
 		First:            first,
@@ -99,10 +92,14 @@ func (p *preScheme) DecryptFirstLevel(ciphertext *types.FirstLevelCipherText, se
 	temp := new(types.GT).Exp(*ciphertext.First, new(big.Int).ModInverse(big.NewInt(1), secretKey.Second))
 
 	symmetricKeyGT := new(types.GT).Div(ciphertext.Second, temp)
-	symmetricKeyBytes := symmetricKeyGT.Bytes()
 
-	symmetricKey := symmetricKeyBytes[:32]
+	symmetricKey, err := crypto.DeriveKeyFromGT(symmetricKeyGT, 32)
+
+	if err != nil {
+		panic("error in deriving key")
+	}
+
 	fmt.Println("decrypted symmetric key: ", symmetricKey)
-	decryptedMessage, _ := utils.SymmetricDecrypt(ciphertext.EncryptedMessage, symmetricKey)
+	decryptedMessage, _ := crypto.DecryptAESGCM(ciphertext.EncryptedMessage, symmetricKey)
 	return decryptedMessage
 }
