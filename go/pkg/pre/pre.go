@@ -101,7 +101,6 @@ func (p *preScheme) DecryptFirstLevel(ciphertext *types.FirstLevelCipherText, se
 		panic("error in deriving key")
 	}
 
-	fmt.Println("decrypted symmetric key: ", symmetricKey)
 	decryptedMessage, _ := crypto.DecryptAESGCM(ciphertext.EncryptedMessage, symmetricKey)
 	return decryptedMessage
 }
