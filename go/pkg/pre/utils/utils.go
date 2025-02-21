@@ -25,9 +25,9 @@ func GenerateSystemParameters() (g1 bn254.G1Affine, g2 bn254.G2Affine, Z bn254.G
 	return g1, g2, Z
 }
 
-func SecretToPubkey(secret *types.SecretKey, g *types.G2Affine, Z *types.GT) *types.PublicKey {
+func SecretToPubkey(secret *types.SecretKey, g *bn254.G2Affine, Z *bn254.GT) *types.PublicKey {
 	return &types.PublicKey{
-		First:  new(types.GT).Exp(*Z, secret.First),
+		First:  new(bn254.GT).Exp(*Z, secret.First),
 		Second: g.ScalarMultiplicationBase(secret.Second),
 	}
 }
@@ -35,7 +35,7 @@ func SecretToPubkey(secret *types.SecretKey, g *types.G2Affine, Z *types.GT) *ty
 // GenerateRandomKeyPair generates a random key pair for the PRE scheme.
 // It returns a random key pair with a random public key and secret key.
 // The public key is generated from the secret key using the system parameters g and Z.
-func GenerateRandomKeyPair(g *types.G2Affine, Z *types.GT) *types.KeyPair {
+func GenerateRandomKeyPair(g *bn254.G2Affine, Z *bn254.GT) *types.KeyPair {
 	sk := &types.SecretKey{
 		First:  GenerateRandomScalar(),
 		Second: GenerateRandomScalar(),
@@ -52,7 +52,7 @@ func GenerateRandomKeyPair(g *types.G2Affine, Z *types.GT) *types.KeyPair {
 
 // GenerateRandomScalar generates a random scalar for cryptographic operations.
 // It returns a random big.Int scalar value from a random int64.
-func GenerateRandomScalar() *types.Int {
+func GenerateRandomScalar() *big.Int {
 	return big.NewInt(mathrand.Int63())
 }
 

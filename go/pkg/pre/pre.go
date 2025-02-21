@@ -12,9 +12,9 @@ import (
 
 // preScheme implements the PreScheme interface
 type preScheme struct {
-	G1 *types.G1Affine
-	G2 *types.G2Affine
-	Z  *types.GT
+	G1 *bn254.G1Affine
+	G2 *bn254.G2Affine
+	Z  *bn254.GT
 }
 
 // var _ types.PreScheme = (*preScheme)(nil)
@@ -32,7 +32,7 @@ func NewPreScheme() *preScheme {
 // GenerateReEncryptionKey generates a re-encryption key indicate A->B relation for the PRE scheme.
 // It takes the public key of A and a portion of secret key of B as input.
 // The re-encryption key is a point in G1 group.
-func (p *preScheme) GenerateReEncryptionKey(secretA *types.Int, publicB *types.G2Affine) *bn254.G2Affine {
+func (p *preScheme) GenerateReEncryptionKey(secretA *big.Int, publicB *bn254.G2Affine) *bn254.G2Affine {
 	return publicB.ScalarMultiplicationBase(secretA)
 }
 
@@ -41,7 +41,7 @@ func (p *preScheme) GenerateReEncryptionKey(secretA *types.Int, publicB *types.G
 // It takes the public key of A, a portion of secret key of B, the message m and a random scalar as input.
 // The scalar is used to randomize the encryption, should not be reused in other sessions.
 // It returns the ciphertext in the form of a pair of points in G1 and GT groups.
-func (p *preScheme) SecondLevelEncryption(pubkeyA *types.GT, secretB *types.Int, message string, scalar *types.Int) *types.SecondLevelCipherText {
+func (p *preScheme) SecondLevelEncryption(pubkeyA *bn254.GT, secretB *bn254.Int, message string, scalar *bn254.Int) *types.SecondLevelCipherText {
 
 	// generate random symmetric key
 	keyGT, key, _ := crypto.GenerateRandomSymmetricKeyFromGT(32)
@@ -69,7 +69,7 @@ func (p *preScheme) SecondLevelEncryption(pubkeyA *types.GT, secretB *types.Int,
 // It re-encrypts the ciphertext under the re-encryption key.
 // It takes the second-level ciphertext and the re-encryption key as input.
 // It returns the re-encrypted(first-level) ciphertext.
-func (p *preScheme) ReEncryption(ciphertext *types.SecondLevelCipherText, reKey *types.G2Affine, pubKeyB types.G2Affine) *types.FirstLevelCipherText {
+func (p *preScheme) ReEncryption(ciphertext *types.SecondLevelCipherText, reKey *bn254.G2Affine, pubKeyB bn254.G2Affine) *types.FirstLevelCipherText {
 	// compute the re-encryption
 	first, err := bn254.Pair([]bn254.G1Affine{*ciphertext.First}, []bn254.G2Affine{*reKey})
 	if err != nil {
@@ -89,9 +89,9 @@ func (p *preScheme) SecretToPubkey(secret *types.SecretKey) *types.PublicKey {
 
 // Decrypt first-level ciphertext
 func (p *preScheme) DecryptFirstLevel(ciphertext *types.FirstLevelCipherText, secretKey *types.SecretKey) string {
-	temp := new(types.GT).Exp(*ciphertext.First, new(big.Int).ModInverse(big.NewInt(1), secretKey.Second))
+	temp := new(bn254.GT).Exp(*ciphertext.First, new(big.Int).ModInverse(big.NewInt(1), secretKey.Second))
 
-	symmetricKeyGT := new(types.GT).Div(ciphertext.Second, temp)
+	symmetricKeyGT := new(bn254.GT).Div(ciphertext.Second, temp)
 
 	symmetricKey, err := crypto.DeriveKeyFromGT(symmetricKeyGT, 32)
 

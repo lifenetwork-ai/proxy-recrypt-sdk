@@ -6,7 +6,6 @@ import (
 	"io"
 
 	"github.com/consensys/gnark-crypto/ecc/bn254"
-	"github.com/tuantran-genetica/human-network-crypto-lib/pkg/pre/types"
 	"golang.org/x/crypto/hkdf"
 )
 
@@ -28,7 +27,7 @@ func GenerateRandomSymmetricKeyFromGT(keySize int) (*bn254.GT, []byte, error) {
 	}
 
 	// Generate random GT element
-	randomGT, err := new(types.GT).SetRandom()
+	randomGT, err := new(bn254.GT).SetRandom()
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to generate random GT element: %v", err)
 	}
@@ -44,7 +43,7 @@ func GenerateRandomSymmetricKeyFromGT(keySize int) (*bn254.GT, []byte, error) {
 
 // DeriveKeyFromGT derives a symmetric key of specified size (16, 24, or 32 bytes) from a bn254.GT element.
 // The function returns the derived symmetric key or an error if derivation fails.
-func DeriveKeyFromGT(gtElement *types.GT, keySize int) ([]byte, error) {
+func DeriveKeyFromGT(gtElement *bn254.GT, keySize int) ([]byte, error) {
 	// Validate inputs
 	if gtElement == nil {
 		return nil, fmt.Errorf("GT element is nil")
