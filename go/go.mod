@@ -5,6 +5,7 @@ go 1.23.3
 require (
 	github.com/consensys/gnark-crypto v0.16.0
 	github.com/stretchr/testify v1.10.0
+	golang.org/x/crypto v0.33.0
 )
 
 require (
@@ -15,7 +16,6 @@ require (
 	github.com/mmcloughlin/addchain v0.4.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rogpeppe/go-internal v1.13.1 // indirect
-	golang.org/x/crypto v0.33.0 // indirect
 	golang.org/x/sys v0.30.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	rsc.io/tmplfunc v0.0.3 // indirect
