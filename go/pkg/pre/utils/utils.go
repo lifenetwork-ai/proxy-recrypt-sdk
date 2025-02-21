@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"crypto/rand"
 	"math/big"
 	mathrand "math/rand"
 
@@ -56,12 +55,14 @@ func GenerateRandomScalar() *big.Int {
 	return big.NewInt(mathrand.Int63())
 }
 
-// GenerateRandomSymmetricKey generates a random symmetric key
-func GenerateRandomSymmetricKey() ([]byte, error) {
-	key := make([]byte, 32) // 256-bit key
-	_, err := rand.Read(key)
-	if err != nil {
-		return nil, err
-	}
-	return key, nil
+func GenerateRandomGTElem() *bn254.GT {
+	elem, _ := new(bn254.GT).SetRandom()
+	return elem
+}
+
+func GenerateRandomG1Elem() *bn254.G1Affine {
+	_, _, g1, _ := bn254.Generators()
+	randomScalar := GenerateRandomScalar()
+	elem := g1.ScalarMultiplicationBase(randomScalar)
+	return elem
 }
