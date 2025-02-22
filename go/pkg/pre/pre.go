@@ -41,7 +41,7 @@ func (p *preScheme) GenerateReEncryptionKey(secretA *big.Int, publicB *bn254.G2A
 // It takes the public key of A, a portion of secret key of B, the message m and a random scalar as input.
 // The scalar is used to randomize the encryption, should not be reused in other sessions.
 // It returns the ciphertext in the form of a pair of points in G1 and GT groups.
-func (p *preScheme) SecondLevelEncryption(pubkeyA *bn254.GT, secretB *big.Int, message string, scalar *big.Int) *types.SecondLevelCipherText {
+func (p *preScheme) SecondLevelEncryption(pubkeyA *bn254.GT, message string, scalar *big.Int) *types.SecondLevelCipherText {
 
 	// generate random symmetric key
 	keyGT, key, _ := crypto.GenerateRandomSymmetricKeyFromGT(32)

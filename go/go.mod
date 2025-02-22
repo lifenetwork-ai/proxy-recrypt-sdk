@@ -1,6 +1,6 @@
 module github.com/tuantran-genetica/human-network-crypto-lib
 
-go 1.23.3
+go 1.23
 
 require (
 	github.com/consensys/gnark-crypto v0.16.0
