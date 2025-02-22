@@ -1,6 +1,8 @@
 package utils
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"math/big"
 	mathrand "math/rand"
 
@@ -65,4 +67,36 @@ func GenerateRandomG1Elem() *bn254.G1Affine {
 	randomScalar := GenerateRandomScalar()
 	elem := g1.ScalarMultiplicationBase(randomScalar)
 	return elem
+}
+
+func GenerateRandomG2Elem() *bn254.G2Affine {
+	_, _, _, g2 := bn254.Generators()
+	randomScalar := GenerateRandomScalar()
+	elem := g2.ScalarMultiplicationBase(randomScalar)
+	return elem
+}
+
+func GenerateMockSecondLevelCipherText(length int) *types.SecondLevelCipherText {
+	return &types.SecondLevelCipherText{
+		EncryptedKey: &types.SecondLevelSymmetricKey{
+			First:  GenerateRandomG1Elem(),
+			Second: GenerateRandomGTElem(),
+		},
+		EncryptedMessage: GenerateRandomString(length),
+	}
+}
+
+// GenerateRandomString creates a cryptographically secure random string of fixed length
+func GenerateRandomString(length int) string {
+	// Calculate number of bytes needed for requested length
+	// Each byte becomes 2 hex characters
+	bytes := make([]byte, (length+1)/2)
+
+	// Generate random bytes using crypto/rand
+	if _, err := rand.Read(bytes); err != nil {
+		return ""
+	}
+
+	// Convert to hex string and trim to exact length
+	return hex.EncodeToString(bytes)[:length]
 }

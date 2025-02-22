@@ -32,3 +32,12 @@ func TestPreFullFlow(t *testing.T) {
 
 	require.Equal(t, message, decryptedMessage)
 }
+
+func BenchmarkReEncryption(b *testing.B) {
+	scheme := NewPreScheme()
+	cipherText := utils.GenerateMockSecondLevelCipherText(500)
+	reKey := utils.GenerateRandomG2Elem()
+	for n := 0; n < b.N; n++ {
+		scheme.ReEncryption(cipherText, reKey, *utils.GenerateRandomG2Elem())
+	}
+}
