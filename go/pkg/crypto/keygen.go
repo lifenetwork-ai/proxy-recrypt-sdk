@@ -71,5 +71,9 @@ func DeriveKeyFromGT(gtElement *bn254.GT, keySize int) ([]byte, error) {
 		return nil, fmt.Errorf("failed to derive key: %v", err)
 	}
 
+	if len(symmetricKey) != keySize {
+		return nil, fmt.Errorf("derived key is not the expected size")
+	}
+
 	return symmetricKey, nil
 }

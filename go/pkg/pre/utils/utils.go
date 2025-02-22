@@ -4,9 +4,9 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"math/big"
-	mathrand "math/rand"
 
 	"github.com/consensys/gnark-crypto/ecc/bn254"
+	"github.com/tuantran-genetica/human-network-crypto-lib/pkg/crypto"
 	"github.com/tuantran-genetica/human-network-crypto-lib/pkg/pre/types"
 )
 
@@ -51,10 +51,12 @@ func GenerateRandomKeyPair(g *bn254.G2Affine, Z *bn254.GT) *types.KeyPair {
 
 }
 
-// GenerateRandomScalar generates a random scalar for cryptographic operations.
-// It returns a random big.Int scalar value from a random int64.
 func GenerateRandomScalar() *big.Int {
-	return big.NewInt(mathrand.Int63())
+	// Get the order of BN254 curve
+	order := bn254.ID.ScalarField()
+	// Generate random scalar in [0, order-1]
+	scalar, _ := rand.Int(rand.Reader, order)
+	return scalar
 }
 
 func GenerateRandomGTElem() *bn254.GT {
@@ -99,4 +101,38 @@ func GenerateRandomString(length int) string {
 
 	// Convert to hex string and trim to exact length
 	return hex.EncodeToString(bytes)[:length]
+}
+
+// SecondLevelEncryption performs the second level encryption for the PRE scheme.
+// It encrypts a message m ∈ GT under pkA such that it can be decrypted by A and delegatees.
+// It takes the public key of A, a portion of secret key of B, the message m and a random scalar as input.
+// The scalar is used to randomize the encryption, should not be reused in other sessions.
+// It returns the ciphertext in the form of a pair of points in G1 and GT groups.
+func MockSecondLevelEnctyption(G1 *bn254.G1Affine, Z *bn254.GT, secretA *types.SecretKey, message string, scalar *big.Int, keyGT *bn254.GT, key []byte) *types.SecondLevelCipherText {
+
+	// check if scalar is in the correct range
+	if scalar.Cmp(bn254.ID.ScalarField()) >= 0 {
+		panic("scalar is out of range")
+	}
+
+	// encrypt the message
+	encryptedMessage, err := crypto.EncryptAESGCM(message, key)
+
+	if err != nil {
+		panic("error in encryption")
+	}
+
+	first := G1.ScalarMultiplicationBase(scalar)
+	secondTemp1 := new(bn254.GT).Exp(*Z, secretA.First)
+	secondTemp := new(bn254.GT).Exp(*secondTemp1, scalar)
+	second := new(bn254.GT).Mul(keyGT, secondTemp)
+
+	encryptedKey := &types.SecondLevelSymmetricKey{
+		First:  first,
+		Second: second,
+	}
+	return &types.SecondLevelCipherText{
+		EncryptedKey:     encryptedKey,
+		EncryptedMessage: encryptedMessage,
+	}
 }

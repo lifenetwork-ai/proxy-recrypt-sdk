@@ -30,10 +30,10 @@ func NewPreScheme() *preScheme {
 }
 
 // GenerateReEncryptionKey generates a re-encryption key indicate A->B relation for the PRE scheme.
-// It takes the public key of A and a portion of secret key of B as input.
+// It takes the a portion of secret key of A and a portion of public key of B as input.
 // The re-encryption key is a point in G1 group.
-func (p *preScheme) GenerateReEncryptionKey(secretA *big.Int, publicB *bn254.G2Affine) *bn254.G2Affine {
-	return publicB.ScalarMultiplicationBase(secretA)
+func (p *preScheme) GenerateReEncryptionKey(secretA *types.SecretKey, publicB *types.PublicKey) *bn254.G2Affine {
+	return new(bn254.G2Affine).ScalarMultiplication(publicB.Second, secretA.First)
 }
 
 // SecondLevelEncryption performs the second level encryption for the PRE scheme.
@@ -41,7 +41,12 @@ func (p *preScheme) GenerateReEncryptionKey(secretA *big.Int, publicB *bn254.G2A
 // It takes the public key of A, a portion of secret key of B, the message m and a random scalar as input.
 // The scalar is used to randomize the encryption, should not be reused in other sessions.
 // It returns the ciphertext in the form of a pair of points in G1 and GT groups.
-func (p *preScheme) SecondLevelEncryption(pubkeyA *bn254.GT, message string, scalar *big.Int) *types.SecondLevelCipherText {
+func (p *preScheme) SecondLevelEncryption(secretA *types.SecretKey, message string, scalar *big.Int) *types.SecondLevelCipherText {
+
+	// check if scalar is in the correct range
+	if scalar.Cmp(bn254.ID.ScalarField()) >= 0 {
+		panic("scalar is out of range")
+	}
 
 	// generate random symmetric key
 	keyGT, key, _ := crypto.GenerateRandomSymmetricKeyFromGT(32)
@@ -52,9 +57,10 @@ func (p *preScheme) SecondLevelEncryption(pubkeyA *bn254.GT, message string, sca
 		panic("error in encryption")
 	}
 
-	first := p.G1.ScalarMultiplicationBase(scalar)
-	secondTemp := new(bn254.GT).Exp(*pubkeyA, scalar)
-	second := new(bn254.GT).Mul(secondTemp, keyGT)
+	first := new(bn254.G1Affine).ScalarMultiplication(p.G1, scalar)
+	secondTemp1 := new(bn254.GT).Exp(*p.Z, secretA.First)
+	secondTemp := new(bn254.GT).Exp(*secondTemp1, scalar)
+	second := new(bn254.GT).Mul(keyGT, secondTemp)
 
 	encryptedKey := &types.SecondLevelSymmetricKey{
 		First:  first,
@@ -70,7 +76,7 @@ func (p *preScheme) SecondLevelEncryption(pubkeyA *bn254.GT, message string, sca
 // It re-encrypts the ciphertext under the re-encryption key.
 // It takes the second-level ciphertext and the re-encryption key as input.
 // It returns the re-encrypted(first-level) ciphertext.
-func (p *preScheme) ReEncryption(ciphertext *types.SecondLevelCipherText, reKey *bn254.G2Affine, pubKeyB bn254.G2Affine) *types.FirstLevelCipherText {
+func (p *preScheme) ReEncryption(ciphertext *types.SecondLevelCipherText, reKey *bn254.G2Affine) *types.FirstLevelCipherText {
 	// compute the re-encryption
 	first, err := bn254.Pair([]bn254.G1Affine{*ciphertext.EncryptedKey.First}, []bn254.G2Affine{*reKey})
 	if err != nil {
@@ -96,7 +102,6 @@ func (p *preScheme) SecretToPubkey(secret *types.SecretKey) *types.PublicKey {
 // Decrypt first-level ciphertext
 func (p *preScheme) DecryptFirstLevel(ciphertext *types.FirstLevelCipherText, secretKey *types.SecretKey) string {
 	symmetricKey, err := p.decryptFirstLevelKey(ciphertext.EncryptedKey, secretKey)
-
 	if err != nil {
 		panic("error in deriving key")
 	}
@@ -107,7 +112,8 @@ func (p *preScheme) DecryptFirstLevel(ciphertext *types.FirstLevelCipherText, se
 
 // Decrypt first-level encrypted symmetric key
 func (p *preScheme) decryptFirstLevelKey(encryptedKey *types.FirstLevelSymmetricKey, secretKey *types.SecretKey) ([]byte, error) {
-	temp := new(bn254.GT).Exp(*encryptedKey.First, new(big.Int).ModInverse(big.NewInt(1), secretKey.Second))
+	order := bn254.ID.ScalarField()
+	temp := new(bn254.GT).Exp(*encryptedKey.First, new(big.Int).ModInverse(secretKey.Second, order))
 
 	symmetricKeyGT := new(bn254.GT).Div(encryptedKey.Second, temp)
 

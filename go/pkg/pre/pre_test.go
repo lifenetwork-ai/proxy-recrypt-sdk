@@ -17,14 +17,14 @@ func TestPreFullFlow(t *testing.T) {
 
 	// Alice side
 	// Generate re-encryption key for Alice->Bob
-	reKey := scheme.GenerateReEncryptionKey(keyPairAlice.SecretKey.First, keyPairBob.PublicKey.Second)
+	reKey := scheme.GenerateReEncryptionKey(keyPairAlice.SecretKey, keyPairBob.PublicKey)
 	// Alice encrypt a message
 	message := "Life is full of unexpected moments that shape who we become. Each day brings new opportunities to learn, grow, and discover something amazing about ourselves and the world around us. When we embrace these challenges with an open mind and willing heart, we find strength we never knew we had. Remember that every step forward, no matter how small, is progress toward your dreams today."
-	cipherText := scheme.SecondLevelEncryption(keyPairAlice.PublicKey.First, message, utils.GenerateRandomScalar())
+	cipherText := scheme.SecondLevelEncryption(keyPairAlice.SecretKey, message, utils.GenerateRandomScalar())
 
 	// Proxy side
 	// Re-encrypt the message for Bob
-	firstLevelCipherText := scheme.ReEncryption(cipherText, reKey, *keyPairBob.PublicKey.Second)
+	firstLevelCipherText := scheme.ReEncryption(cipherText, reKey)
 
 	// Bob side
 	// Decrypt the message
@@ -38,6 +38,6 @@ func BenchmarkReEncryption(b *testing.B) {
 	cipherText := utils.GenerateMockSecondLevelCipherText(500)
 	reKey := utils.GenerateRandomG2Elem()
 	for n := 0; n < b.N; n++ {
-		scheme.ReEncryption(cipherText, reKey, *utils.GenerateRandomG2Elem())
+		scheme.ReEncryption(cipherText, reKey)
 	}
 }
