@@ -80,30 +80,29 @@ using proxy re-encryption. This is useful when:
 // 3. B receives a first-level ciphertext that looks like direct encryption
 // 4. A's secret key remains secure even if proxy and B collude
 // 5. Re-encryption key is specific to A->B relationship
+
+// PreScheme defines the interface for proxy re-encryption operations
 type PreScheme interface {
-	// GenerateReEncryptionKey generates a re-encryption key for A->B relation
-	// Takes the secret key of A and public key of B as input
-	// Returns a point in G2 group representing the re-encryption key
-	GenerateReEncryptionKey(secretA *big.Int, publicB *bn254.G2Affine) *bn254.G2Affine
+	// GenerateReEncryptionKey generates a re-encryption key for A->B delegation
+	GenerateReEncryptionKey(secretA *SecretKey, publicB *PublicKey) *bn254.G2Affine
 
-	// SecondLevelEncryption performs the second level encryption
-	// Encrypts a message under pkA such that it can be decrypted by A and delegatees
-	// Takes public key of A, secret key portion of B, message, and a random scalar
-	// Returns the second level ciphertext
-	SecondLevelEncryption(pubkeyA *bn254.GT, secretB *big.Int, message string, scalar *big.Int) *SecondLevelCipherText
+	// SecondLevelEncryption encrypts a message that can be decrypted by A and delegatees
+	SecondLevelEncryption(secretA *SecretKey, message string, scalar *big.Int) *SecondLevelCipherText
 
-	// ReEncryption performs the re-encryption operation
-	// Re-encrypts the ciphertext under the re-encryption key
-	// Takes second-level ciphertext, re-encryption key, and public key of B
-	// Returns the first-level ciphertext
-	ReEncryption(ciphertext *SecondLevelCipherText, reKey *bn254.G2Affine, pubKeyB bn254.G2Affine) *FirstLevelCipherText
+	// ReEncryption re-encrypts a second-level ciphertext to a first-level ciphertext
+	ReEncryption(ciphertext *SecondLevelCipherText, reKey *bn254.G2Affine) *FirstLevelCipherText
 
 	// SecretToPubkey converts a secret key to its corresponding public key
-	// Takes a secret key and returns the corresponding public key
 	SecretToPubkey(secret *SecretKey) *PublicKey
 
-	// DecryptFirstLevel decrypts a first-level ciphertext
-	// Takes the ciphertext and secret key as input
-	// Returns the decrypted message as a string
+	// DecryptFirstLevel decrypts a first-level ciphertext using the secret key
 	DecryptFirstLevel(ciphertext *FirstLevelCipherText, secretKey *SecretKey) string
+
+	IGet
+}
+
+type IGet interface {
+	G1() *bn254.G1Affine
+	G2() *bn254.G2Affine
+	Z() *bn254.GT
 }

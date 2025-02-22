@@ -1,9 +1,12 @@
 package pre
 
 import (
+	"encoding/base64"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"github.com/tuantran-genetica/human-network-crypto-lib/pkg/pre/mocks"
 	"github.com/tuantran-genetica/human-network-crypto-lib/pkg/pre/utils"
 )
 
@@ -12,8 +15,8 @@ func TestPreFullFlow(t *testing.T) {
 	scheme := NewPreScheme()
 	// Test setup
 	// Generate key pair for Alice and Bob
-	keyPairAlice := utils.GenerateRandomKeyPair(scheme.G2, scheme.Z)
-	keyPairBob := utils.GenerateRandomKeyPair(scheme.G2, scheme.Z)
+	keyPairAlice := utils.GenerateRandomKeyPair(scheme.G2(), scheme.Z())
+	keyPairBob := utils.GenerateRandomKeyPair(scheme.G2(), scheme.Z())
 
 	// Alice side
 	// Generate re-encryption key for Alice->Bob
@@ -31,6 +34,41 @@ func TestPreFullFlow(t *testing.T) {
 	decryptedMessage := scheme.DecryptFirstLevel(firstLevelCipherText, keyPairBob.SecretKey)
 
 	require.Equal(t, message, decryptedMessage)
+}
+
+func TestMockPreFullFlow(t *testing.T) {
+	// Generate system parameters
+	scheme := mocks.NewMockPreScheme()
+	// Test setup
+	// Generate key pair for Alice and Bob
+	keyPairAlice := utils.GenerateRandomKeyPair(scheme.G2(), scheme.Z())
+	keyPairBob := utils.GenerateRandomKeyPair(scheme.G2(), scheme.Z())
+
+	// Alice side
+	// Generate re-encryption key for Alice->Bob
+	reKey := scheme.GenerateReEncryptionKey(keyPairAlice.SecretKey, keyPairBob.PublicKey)
+	reKeyBytes := reKey.Bytes()
+
+	// load rekey from file
+	reKeyBase64FromFile, err := os.ReadFile("./mocks/rekey.txt")
+	require.NoError(t, err)
+	reKeyBytes2, err := base64.StdEncoding.DecodeString(string(reKeyBase64FromFile))
+	require.NoError(t, err)
+	require.Equal(t, reKeyBytes[:], reKeyBytes2)
+
+	// Alice encrypt a message
+	message, _ := mocks.LoadMockData()
+	cipherText := scheme.SecondLevelEncryption(keyPairAlice.SecretKey, string(message), utils.GenerateRandomScalar())
+
+	// Proxy side
+	// Re-encrypt the message for Bob
+	firstLevelCipherText := scheme.ReEncryption(cipherText, reKey)
+
+	// Bob side
+	// Decrypt the message
+	decryptedMessage := scheme.DecryptFirstLevel(firstLevelCipherText, keyPairBob.SecretKey)
+
+	require.Equal(t, string(message), decryptedMessage)
 }
 
 func BenchmarkReEncryption(b *testing.B) {

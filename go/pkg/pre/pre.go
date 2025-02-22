@@ -12,20 +12,20 @@ import (
 
 // preScheme implements the PreScheme interface
 type preScheme struct {
-	G1 *bn254.G1Affine
-	G2 *bn254.G2Affine
-	Z  *bn254.GT
+	g1 *bn254.G1Affine
+	g2 *bn254.G2Affine
+	z  *bn254.GT
 }
 
-// var _ types.PreScheme = (*preScheme)(nil)
+var _ types.PreScheme = (*preScheme)(nil)
 
 // NewPreScheme creates a new instance of preScheme with generated system parameters
-func NewPreScheme() *preScheme {
+func NewPreScheme() types.PreScheme {
 	g1, g2, Z := utils.GenerateSystemParameters()
 	return &preScheme{
-		G1: &g1,
-		G2: &g2,
-		Z:  &Z,
+		g1: &g1,
+		g2: &g2,
+		z:  &Z,
 	}
 }
 
@@ -57,8 +57,8 @@ func (p *preScheme) SecondLevelEncryption(secretA *types.SecretKey, message stri
 		panic("error in encryption")
 	}
 
-	first := new(bn254.G1Affine).ScalarMultiplication(p.G1, scalar)
-	secondTemp1 := new(bn254.GT).Exp(*p.Z, secretA.First)
+	first := new(bn254.G1Affine).ScalarMultiplication(p.g1, scalar)
+	secondTemp1 := new(bn254.GT).Exp(*p.Z(), secretA.First)
 	secondTemp := new(bn254.GT).Exp(*secondTemp1, scalar)
 	second := new(bn254.GT).Mul(keyGT, secondTemp)
 
@@ -96,7 +96,7 @@ func (p *preScheme) ReEncryption(ciphertext *types.SecondLevelCipherText, reKey 
 
 // Convert the secret key to public key in the PRE scheme.
 func (p *preScheme) SecretToPubkey(secret *types.SecretKey) *types.PublicKey {
-	return utils.SecretToPubkey(secret, p.G2, p.Z)
+	return utils.SecretToPubkey(secret, p.g2, p.z)
 }
 
 // Decrypt first-level ciphertext
@@ -124,4 +124,19 @@ func (p *preScheme) decryptFirstLevelKey(encryptedKey *types.FirstLevelSymmetric
 	}
 
 	return symmetricKey, nil
+}
+
+// GetG1 returns the G1 group element
+func (p *preScheme) G1() *bn254.G1Affine {
+	return p.g1
+}
+
+// GetG2 returns the G2 group element
+func (p *preScheme) G2() *bn254.G2Affine {
+	return p.g2
+}
+
+// GetZ returns the GT group element
+func (p *preScheme) Z() *bn254.GT {
+	return p.z
 }
