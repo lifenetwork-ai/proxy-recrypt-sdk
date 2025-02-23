@@ -38,7 +38,7 @@ func SaveKeyPairToFile(filename string) error {
 	// Serialize public key using base64
 
 	firstBytes := keyPair.PublicKey.First.Bytes()
-	secondBytes := keyPair.PublicKey.Second.Bytes()
+	secondBytes := keyPair.PublicKey.Second.RawBytes()
 	serializable.PublicKey.First = base64.StdEncoding.EncodeToString(firstBytes[:])
 	serializable.PublicKey.Second = base64.StdEncoding.EncodeToString(secondBytes[:])
 
