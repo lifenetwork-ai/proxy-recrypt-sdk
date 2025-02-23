@@ -58,10 +58,12 @@ func DeriveKeyFromGT(gtElement *bn254.GT, keySize int) ([]byte, error) {
 		return nil, fmt.Errorf("failed to get bytes from GT element")
 	}
 
+	salt := []byte("PRE_derive_key")
+
 	// Use HKDF to derive the key
 	hkdf := hkdf.New(sha256.New,
 		gtBytes[:],                  // Input keying material
-		nil,                         // Salt (optional)
+		salt,                        // Salt (optional)
 		[]byte("PRE_symmetric_key"), // Info (context)
 	)
 
