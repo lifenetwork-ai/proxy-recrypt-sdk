@@ -50,10 +50,10 @@ export interface SecondLevelSymmetricKey {
 
 export interface FirstLevelCipherText {
   encryptedKey: FirstLevelSymmetricKey;
-  encryptedMessage: string;
+  encryptedMessage: Uint8Array;
 }
 
 export interface SecondLevelCipherText {
   encryptedKey: SecondLevelSymmetricKey;
-  encryptedMessage: string;
+  encryptedMessage: Uint8Array;
 }

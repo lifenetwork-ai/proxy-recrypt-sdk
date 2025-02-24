@@ -57,7 +57,8 @@ describe("PRE", () => {
       message.toString(),
       randomScalar,
       keyGT,
-      key
+      key,
+      new Uint8Array([223, 226, 69, 90, 252, 126, 59, 176, 98, 14, 194, 123]) // use fixed nonce for determinism
     );
 
     const expectedSecondEncryptedKeyFirstBytes = await fs.readFile(

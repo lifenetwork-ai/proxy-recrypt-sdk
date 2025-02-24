@@ -48,10 +48,6 @@ export class PreSchemeImpl {
       key = key || generatedKeys.key;
     }
 
-    nonce = new Uint8Array([
-      223, 226, 69, 90, 252, 126, 59, 176, 98, 14, 194, 123,
-    ]);
-
     if (!nonce) {
       nonce = webcrypto.getRandomValues(new Uint8Array(12));
     }
@@ -76,7 +72,7 @@ export class PreSchemeImpl {
   async decryptFirstLevel(
     ciphertext: FirstLevelCipherText,
     secretKey: SecretKey
-  ): Promise<string> {
+  ): Promise<Uint8Array> {
     let symmetricKey = this.decryptFirstLevelKey(
       ciphertext.encryptedKey,
       secretKey

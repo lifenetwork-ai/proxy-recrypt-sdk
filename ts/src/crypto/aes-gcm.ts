@@ -1,25 +1,30 @@
-import { webcrypto } from "crypto";
+const crypto = globalThis.crypto;
 
 export async function encryptAESGCM(
   message: string,
   key: Uint8Array,
   nonce?: Uint8Array
-): Promise<string> {
+): Promise<Uint8Array> {
   // Validate key size
   if (![16, 24, 32].includes(key.length)) {
     throw new Error(`Invalid key size: ${key.length}`);
   }
 
+  // Validate nonce if provided
+  if (nonce && nonce.length !== 12) {
+    throw new Error("Nonce must be 12 bytes");
+  }
+
   // Convert message to bytes
   const msgBuffer = new TextEncoder().encode(message);
 
-  // Generate random nonce
+  // Generate random nonce if not provided
   if (!nonce) {
-    nonce = webcrypto.getRandomValues(new Uint8Array(12));
+    nonce = crypto.getRandomValues(new Uint8Array(12));
   }
 
   // Import key
-  const cryptoKey = await webcrypto.subtle.importKey(
+  const cryptoKey = await crypto.subtle.importKey(
     "raw",
     key,
     { name: "AES-GCM" },
@@ -28,10 +33,11 @@ export async function encryptAESGCM(
   );
 
   // Encrypt
-  const ciphertext = await webcrypto.subtle.encrypt(
+  const ciphertext = await crypto.subtle.encrypt(
     {
       name: "AES-GCM",
       iv: nonce,
+      tagLength: 128,
     },
     cryptoKey,
     msgBuffer
@@ -42,28 +48,25 @@ export async function encryptAESGCM(
   result.set(nonce);
   result.set(new Uint8Array(ciphertext), nonce.length);
 
-  // Convert to string
-  return Buffer.from(result).toString("base64");
+  return result;
 }
 
 export async function decryptAESGCM(
-  message: string,
+  encrypted: Uint8Array,
   key: Uint8Array
-): Promise<string> {
+): Promise<Uint8Array> {
   try {
-    // Decode base64
-    const combined = Buffer.from(message, "base64");
-
-    if (combined.length < 12) {
+    if (encrypted.length < 28) {
+      // 12 (nonce) + 16 (minimum tag size)
       throw new Error("Ciphertext too short");
     }
 
     // Extract nonce and ciphertext
-    const nonce = combined.subarray(0, 12);
-    const ciphertext = combined.subarray(12);
+    const nonce = encrypted.subarray(0, 12);
+    const ciphertext = encrypted.subarray(12);
 
     // Import key
-    const cryptoKey = await webcrypto.subtle.importKey(
+    const cryptoKey = await crypto.subtle.importKey(
       "raw",
       key,
       { name: "AES-GCM" },
@@ -72,17 +75,17 @@ export async function decryptAESGCM(
     );
 
     // Decrypt
-    const plainBuffer = await webcrypto.subtle.decrypt(
+    const plainBuffer = await crypto.subtle.decrypt(
       {
         name: "AES-GCM",
         iv: nonce,
+        tagLength: 128,
       },
       cryptoKey,
       ciphertext
     );
 
-    // Convert back to string
-    return new TextDecoder().decode(plainBuffer);
+    return new Uint8Array(plainBuffer);
   } catch (err: any) {
     throw new Error(`Decryption failed: ${err.message}`);
   }
