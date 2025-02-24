@@ -1,0 +1,67 @@
+name: Check testdata sync
+
+on:
+  pull_request:
+    paths:
+      - 'go/testdata/**'
+      - 'ts/testdata/**'
+  push:
+    paths:
+      - 'go/testdata/**'
+      - 'ts/testdata/**'
+
+jobs:
+  check-testdata:
+    name: Verify testdata directories are in sync
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Compare testdata directories
+        run: |
+          # Create arrays of files
+          go_files=($(cd go/testdata && find . -type f -not -name ".*" | sort))
+          ts_files=($(cd ts/testdata && find . -type f -not -name ".*" | sort))
+          
+          # Check if file lists match
+          if [ "${#go_files[@]}" != "${#ts_files[@]}" ]; then
+            echo "❌ Different number of files in testdata directories"
+            echo "go/testdata: ${#go_files[@]} files"
+            echo "ts/testdata: ${#ts_files[@]} files"
+            exit 1
+          fi
+          
+          # Compare each file
+          for i in "${!go_files[@]}"; do
+            go_file="${go_files[$i]}"
+            ts_file="${ts_files[$i]}"
+            
+            if [ "$go_file" != "$ts_file" ]; then
+              echo "❌ File mismatch: $go_file != $ts_file"
+              exit 1
+            fi
+            
+            # Compare file contents
+            if ! cmp -s "go/testdata/$go_file" "ts/testdata/$ts_file"; then
+              echo "❌ Content mismatch in file: $go_file"
+              echo "Diff:"
+              diff "go/testdata/$go_file" "ts/testdata/$ts_file" || true
+              exit 1
+            fi
+          done
+          
+          echo "✅ All testdata files are synchronized"
+
+      - name: Comment on PR if check fails
+        if: failure() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '⚠️ Testdata directories are out of sync! Please run `scripts/sync-testdata.sh` to synchronize them.'
+            }) 
