@@ -3,9 +3,11 @@ package pre_test
 import (
 	"testing"
 
+	"github.com/consensys/gnark-crypto/ecc/bn254"
 	"github.com/stretchr/testify/require"
 	"github.com/tuantran-genetica/human-network-crypto-lib/pkg/pre"
 	"github.com/tuantran-genetica/human-network-crypto-lib/pkg/pre/mocks"
+	"github.com/tuantran-genetica/human-network-crypto-lib/pkg/pre/types"
 	"github.com/tuantran-genetica/human-network-crypto-lib/pkg/pre/utils"
 )
 
@@ -78,4 +80,21 @@ func BenchmarkReEncryption(b *testing.B) {
 	for n := 0; n < b.N; n++ {
 		scheme.ReEncryption(cipherText, reKey)
 	}
+}
+
+func TestGenerateKeyPair(t *testing.T) {
+	scheme := pre.NewPreScheme()
+
+	sk := &types.SecretKey{
+		First:  utils.GenerateRandomScalar(),
+		Second: utils.GenerateRandomScalar(),
+	}
+
+	pk := utils.SecretToPubkey(sk, scheme.G2(), scheme.Z())
+
+	// Pk(Z^a1, g2^a2)
+
+	require.Equal(t, pk.First, new(bn254.GT).Exp(*scheme.Z(), sk.First))
+	require.Equal(t, pk.Second, new(bn254.G2Affine).ScalarMultiplication(scheme.G2(), sk.Second))
+
 }
