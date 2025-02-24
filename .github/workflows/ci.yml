@@ -1,3 +1,8 @@
+name: Run tests and upload coverage
+
+on: 
+  push
+
 jobs:
   test:
     name: Run tests and collect coverage
