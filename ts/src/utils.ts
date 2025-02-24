@@ -15,9 +15,6 @@ export function secretToPubkey(
 
 import fs from "fs/promises";
 import { Buffer } from "buffer";
-import { bn254 } from "@noble/curves/bn254";
-import { ProjConstructor } from "@noble/curves/abstract/weierstrass";
-
 // Interface for JSON serialization/deserialization
 interface SerializableKeyPair {
   PublicKey: {
@@ -69,6 +66,16 @@ export async function loadKeyPairFromFile(filename: string): Promise<KeyPair> {
   };
 
   return keyPair;
+}
+
+export async function loadReKeyFromFile(filename: string): Promise<G2Point> {
+  // Read file
+  try {
+    let jsonData = await fs.readFile(filename, "utf8");
+    return BN254CurveWrapper.G2FromBytes(Buffer.from(jsonData, "base64"));
+  } catch (err) {
+    throw new Error(`Failed to read rekey file: ${err}`);
+  }
 }
 
 export function g2FromBytes(bytes: Uint8Array): { x: Fp2; y: Fp2 } {
@@ -139,8 +146,44 @@ export function g2ToBytes(point: { x: Fp2; y: Fp2 }): Uint8Array {
 }
 
 function bigIntToBytes(value: bigint, target: Uint8Array): void {
-  const hex = value.toString(16).padStart(64, "0");
-  for (let i = 0; i < 32; i++) {
-    target[i] = parseInt(hex.slice(i * 2, (i + 1) * 2), 16);
+  let tempValue = value;
+  for (let i = target.length - 1; i >= 0; i--) {
+    target[i] = Number(tempValue & 0xffn);
+    tempValue >>= 8n;
   }
+}
+
+export function base64BufferToBigInt(buffer: Buffer): bigint {
+  // Buffer contains base64 string, so first convert to string
+  const base64Str = buffer.toString("utf8");
+
+  // Decode base64 to bytes
+  const bytes = Buffer.from(base64Str, "base64");
+
+  // Convert bytes to BigInt
+  return BigInt("0x" + bytes.toString("hex"));
+}
+
+// Constants
+const G1_POINT_SIZE = 64; // Size in bytes for uncompressed G1 point
+
+/**
+ * Converts a G1 point to its raw bytes representation
+ * Following the Go implementation format
+ */
+
+export function g1ToBytes(point: { x: bigint; y: bigint }): Uint8Array {
+  // Allocate buffer for uncompressed point
+  const result = new Uint8Array(G1_POINT_SIZE);
+
+  // Store Y coordinate in the second 32 bytes
+  bigIntToBytes(point.y, result.subarray(32, 64));
+
+  // Store X coordinate in the first 32 bytes
+  bigIntToBytes(point.x, result.subarray(0, 32));
+
+  // Set the uncompressed flag in the first byte
+  result[0] |= 0x00;
+
+  return result;
 }

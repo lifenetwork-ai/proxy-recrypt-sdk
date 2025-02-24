@@ -2,7 +2,8 @@ import { webcrypto } from "crypto";
 
 export async function encryptAESGCM(
   message: string,
-  key: Uint8Array
+  key: Uint8Array,
+  nonce?: Uint8Array
 ): Promise<string> {
   // Validate key size
   if (![16, 24, 32].includes(key.length)) {
@@ -13,7 +14,9 @@ export async function encryptAESGCM(
   const msgBuffer = new TextEncoder().encode(message);
 
   // Generate random nonce
-  const nonce = webcrypto.getRandomValues(new Uint8Array(12));
+  if (!nonce) {
+    nonce = webcrypto.getRandomValues(new Uint8Array(12));
+  }
 
   // Import key
   const cryptoKey = await webcrypto.subtle.importKey(
@@ -39,7 +42,7 @@ export async function encryptAESGCM(
   result.set(nonce);
   result.set(new Uint8Array(ciphertext), nonce.length);
 
-  // Convert to base64
+  // Convert to string
   return Buffer.from(result).toString("base64");
 }
 
@@ -56,8 +59,8 @@ export async function decryptAESGCM(
     }
 
     // Extract nonce and ciphertext
-    const nonce = combined.slice(0, 12);
-    const ciphertext = combined.slice(12);
+    const nonce = combined.subarray(0, 12);
+    const ciphertext = combined.subarray(12);
 
     // Import key
     const cryptoKey = await webcrypto.subtle.importKey(

@@ -1,7 +1,12 @@
 import * as crypto from "crypto";
 import { BN254CurveWrapper, GTElement } from "./bn254";
 
-export function generateRandomSymmetricKeyFromGT(keySize: number): Required<{
+// Default key size for symmetric encryption
+const DEFAULT_KEY_SIZE = 32;
+
+export function generateRandomSymmetricKeyFromGT(
+  keySize: number = DEFAULT_KEY_SIZE
+): Required<{
   keyGT: GTElement;
   key: Uint8Array;
 }> {
@@ -13,7 +18,7 @@ export function generateRandomSymmetricKeyFromGT(keySize: number): Required<{
 
 export function deriveKeyFromGT(
   gtElement: GTElement,
-  keySize: number
+  keySize: number = DEFAULT_KEY_SIZE
 ): Uint8Array {
   // Validate inputs
   if (!gtElement) {

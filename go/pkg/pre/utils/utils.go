@@ -2,8 +2,11 @@ package utils
 
 import (
 	"crypto/rand"
+	"encoding/base64"
 	"encoding/hex"
 	"math/big"
+
+	"os"
 
 	"github.com/consensys/gnark-crypto/ecc/bn254"
 	"github.com/tuantran-genetica/human-network-crypto-lib/pkg/pre/types"
@@ -83,7 +86,7 @@ func GenerateMockSecondLevelCipherText(length int) *types.SecondLevelCipherText 
 			First:  GenerateRandomG1Elem(),
 			Second: GenerateRandomGTElem(),
 		},
-		EncryptedMessage: GenerateRandomString(length),
+		EncryptedMessage: []byte(GenerateRandomString(length)),
 	}
 }
 
@@ -100,4 +103,12 @@ func GenerateRandomString(length int) string {
 
 	// Convert to hex string and trim to exact length
 	return hex.EncodeToString(bytes)[:length]
+}
+func WriteAsBase64IfNotExists(filename string, data []byte) error {
+	_, err := os.Stat(filename)
+	if os.IsNotExist(err) {
+		base64Form := base64.StdEncoding.EncodeToString(data)
+		return os.WriteFile(filename, []byte(base64Form), 0600)
+	}
+	return err
 }

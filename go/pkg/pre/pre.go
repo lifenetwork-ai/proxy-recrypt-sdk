@@ -50,8 +50,9 @@ func (p *preScheme) SecondLevelEncryption(secretA *types.SecretKey, message stri
 
 	// generate random symmetric key
 	keyGT, key, _ := crypto.GenerateRandomSymmetricKeyFromGT(32)
+
 	// encrypt the message
-	encryptedMessage, err := crypto.EncryptAESGCM(message, key)
+	encryptedMessage, err := crypto.EncryptAESGCM([]byte(message), key)
 
 	if err != nil {
 		panic("error in encryption")
@@ -107,7 +108,7 @@ func (p *preScheme) DecryptFirstLevel(ciphertext *types.FirstLevelCipherText, se
 	}
 
 	decryptedMessage, _ := crypto.DecryptAESGCM(ciphertext.EncryptedMessage, symmetricKey)
-	return decryptedMessage
+	return string(decryptedMessage)
 }
 
 // Decrypt first-level encrypted symmetric key

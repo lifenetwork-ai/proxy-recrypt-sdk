@@ -13,12 +13,9 @@ import {
   generateRandomSymmetricKeyFromGT,
   deriveKeyFromGT,
 } from "./crypto";
-import { CurveType } from "@noble/curves/abstract/bls";
 import { BN254CurveWrapper, G1Point, G2Point, GTElement } from "./crypto/bn254";
 import { bn254 } from "@noble/curves/bn254";
 import * as bigintModArith from "bigint-mod-arith";
-
-const DEFAULT_KEY_SIZE = 32;
 
 export class PreSchemeImpl {
   private G1: G1Point;
@@ -36,17 +33,32 @@ export class PreSchemeImpl {
   }
 
   async secondLevelEncryption(
-    pubkeyA: GTElement,
-    secretB: bigint,
+    secretA: SecretKey,
     message: string,
-    scalar: bigint
+    scalar: bigint,
+    keyGT?: GTElement,
+    key?: Uint8Array
   ): Promise<SecondLevelCipherText> {
-    const { keyGT, key } = generateRandomSymmetricKeyFromGT(DEFAULT_KEY_SIZE);
-    const encryptedMessage = await encryptAESGCM(message, key);
+    // Generate random symmetric key only if not provided
+    if (!keyGT || !key) {
+      const generatedKeys = generateRandomSymmetricKeyFromGT();
+      keyGT = keyGT || generatedKeys.keyGT;
+      key = key || generatedKeys.key;
+    }
 
+    console.log(Buffer.from(key).toString("base64"));
+    // [223 226 69 90 252 126 59 176 98 14 194 123]
+    const nonce = new Uint8Array([
+      223, 226, 69, 90, 252, 126, 59, 176, 98, 14, 194, 123,
+    ]);
+    const encryptedMessage = await encryptAESGCM(message, key, nonce);
+    console.log(encryptedMessage.substring(0, 10));
     const first = BN254CurveWrapper.g1ScalarMul(this.G1, scalar);
     const second = BN254CurveWrapper.gtMul(
-      BN254CurveWrapper.gtPow(pubkeyA, scalar),
+      BN254CurveWrapper.gtPow(
+        BN254CurveWrapper.gtPow(this.Z, secretA.first),
+        scalar
+      ),
       keyGT
     );
 
@@ -87,7 +99,7 @@ export class PreSchemeImpl {
 
     const symmetricKeyGT = BN254CurveWrapper.gtDiv(encryptedKey.second, temp);
 
-    const symmetricKey = deriveKeyFromGT(symmetricKeyGT, DEFAULT_KEY_SIZE);
+    const symmetricKey = deriveKeyFromGT(symmetricKeyGT);
 
     return symmetricKey;
   }

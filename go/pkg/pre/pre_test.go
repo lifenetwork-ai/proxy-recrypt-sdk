@@ -1,8 +1,6 @@
 package pre
 
 import (
-	"encoding/base64"
-	"os"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -37,7 +35,7 @@ func TestPreFullFlow(t *testing.T) {
 }
 
 func TestMockPreFullFlow(t *testing.T) {
-	// Generate system parameters
+
 	scheme := mocks.NewMockPreScheme()
 	// Test setup
 	// Generate key pair for Alice and Bob
@@ -47,18 +45,21 @@ func TestMockPreFullFlow(t *testing.T) {
 	// Alice side
 	// Generate re-encryption key for Alice->Bob
 	reKey := scheme.GenerateReEncryptionKey(keyPairAlice.SecretKey, keyPairBob.PublicKey)
-	reKeyBytes := reKey.Bytes()
+	reKeyBytes := reKey.RawBytes()
 
-	// load rekey from file
-	reKeyBase64FromFile, err := os.ReadFile("./mocks/rekey.txt")
-	require.NoError(t, err)
-	reKeyBytes2, err := base64.StdEncoding.DecodeString(string(reKeyBase64FromFile))
-	require.NoError(t, err)
-	require.Equal(t, reKeyBytes[:], reKeyBytes2)
+	require.Equal(t, reKeyBytes, scheme.(*mocks.MockPreScheme).ReKey.RawBytes())
 
-	// Alice encrypt a message
-	message, _ := mocks.LoadMockData()
-	cipherText := scheme.SecondLevelEncryption(keyPairAlice.SecretKey, string(message), utils.GenerateRandomScalar())
+	cipherText := scheme.SecondLevelEncryption(keyPairAlice.SecretKey, string(scheme.(*mocks.MockPreScheme).Message), scheme.(*mocks.MockPreScheme).Scalar)
+
+	// Store the second level encrypted key and encrypted data for mocks
+	// fmt.Println("first point", cipherText.EncryptedKey.First)
+	// SecondLevelEncryptedKeyFirstBytes := cipherText.EncryptedKey.First.RawBytes()
+	// SecondLevelEncryptedKeySecondBytes := cipherText.EncryptedKey.Second.Bytes()
+	// EncryptedDataBytes := []byte(cipherText.EncryptedMessage)
+
+	// utils.WriteAsBase64IfNotExists("./mocks/second_encrypted_key_first.txt", SecondLevelEncryptedKeyFirstBytes[:])
+	// utils.WriteAsBase64IfNotExists("./mocks/second_encrypted_key_second.txt", SecondLevelEncryptedKeySecondBytes[:])
+	// utils.WriteAsBase64IfNotExists("./mocks/encrypted_data.txt", EncryptedDataBytes)
 
 	// Proxy side
 	// Re-encrypt the message for Bob
@@ -68,7 +69,7 @@ func TestMockPreFullFlow(t *testing.T) {
 	// Decrypt the message
 	decryptedMessage := scheme.DecryptFirstLevel(firstLevelCipherText, keyPairBob.SecretKey)
 
-	require.Equal(t, string(message), decryptedMessage)
+	require.Equal(t, string(scheme.(*mocks.MockPreScheme).Message), decryptedMessage)
 }
 
 func BenchmarkReEncryption(b *testing.B) {

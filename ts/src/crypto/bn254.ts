@@ -9,7 +9,7 @@ import {
   weierstrassPoints,
 } from "@noble/curves/abstract/weierstrass";
 import * as bigintModArith from "bigint-mod-arith";
-import { g2FromBytes, g2ToBytes } from "../utils";
+import { g1ToBytes, g2FromBytes, g2ToBytes } from "../utils";
 
 // G1 is a point on the base field (Fp)
 export type G1Point = ProjPointType<Fp>;
@@ -69,7 +69,7 @@ export class BN254CurveWrapper {
   }
 
   static G1ToBytes(P: G1Point): Uint8Array {
-    return P.toRawBytes();
+    return g1ToBytes(P);
   }
 
   static G2ToBytes(Q: G2Point): Uint8Array {

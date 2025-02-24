@@ -19,13 +19,13 @@ type SecondLevelSymmetricKey struct {
 // FirstLevelCipherText represents the first level encrypted message components
 type FirstLevelCipherText struct {
 	EncryptedKey     *FirstLevelSymmetricKey // The encrypted symmetric key
-	EncryptedMessage string                  // The encrypted message, encrypted with the symmetric key
+	EncryptedMessage []byte                  // The encrypted message, encrypted with the symmetric key
 }
 
 // SecondLevelCipherText represents the second level encrypted message components
 type SecondLevelCipherText struct {
 	EncryptedKey     *SecondLevelSymmetricKey // The encrypted symmetric key
-	EncryptedMessage string                   // The encrypted message, encrypted with the symmetric key
+	EncryptedMessage []byte                   // The encrypted message, encrypted with the symmetric key
 }
 
 // ToBytes serializes FirstLevelSymmetricKey to bytes
