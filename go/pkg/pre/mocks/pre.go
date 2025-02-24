@@ -111,9 +111,6 @@ func (m *MockPreScheme) SecondLevelEncryption(_ *types.SecretKey, _ string, _ *b
 		panic(err)
 	}
 	utils.WriteAsBase64IfNotExists("./mocks/symmetric_key.txt", m.SymmetricKey)
-	if err != nil {
-		panic(err)
-	}
 
 	encryptedMessage, _ := crypto.EncryptAESGCM(m.Message, m.SymmetricKey)
 	err = utils.WriteAsBase64IfNotExists("./mocks/encrypted_message.txt", encryptedMessage)
