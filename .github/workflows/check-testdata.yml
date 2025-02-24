@@ -1,14 +1,8 @@
 name: Check testdata sync
 
 on:
-  pull_request:
-    paths:
-      - 'go/testdata/**'
-      - 'ts/testdata/**'
-  push:
-    paths:
-      - 'go/testdata/**'
-      - 'ts/testdata/**'
+  pull_request 
+
 
 jobs:
   check-testdata:
