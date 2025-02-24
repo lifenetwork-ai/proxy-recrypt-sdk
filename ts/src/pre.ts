@@ -16,6 +16,7 @@ import {
 import { BN254CurveWrapper, G1Point, G2Point, GTElement } from "./crypto/bn254";
 import { bn254 } from "@noble/curves/bn254";
 import * as bigintModArith from "bigint-mod-arith";
+import { webcrypto } from "crypto";
 
 export class PreSchemeImpl {
   private G1: G1Point;
@@ -37,7 +38,8 @@ export class PreSchemeImpl {
     message: string,
     scalar: bigint,
     keyGT?: GTElement,
-    key?: Uint8Array
+    key?: Uint8Array,
+    nonce?: Uint8Array
   ): Promise<SecondLevelCipherText> {
     // Generate random symmetric key only if not provided
     if (!keyGT || !key) {
@@ -46,13 +48,14 @@ export class PreSchemeImpl {
       key = key || generatedKeys.key;
     }
 
-    console.log(Buffer.from(key).toString("base64"));
-    // [223 226 69 90 252 126 59 176 98 14 194 123]
-    const nonce = new Uint8Array([
+    nonce = new Uint8Array([
       223, 226, 69, 90, 252, 126, 59, 176, 98, 14, 194, 123,
     ]);
+
+    if (!nonce) {
+      nonce = webcrypto.getRandomValues(new Uint8Array(12));
+    }
     const encryptedMessage = await encryptAESGCM(message, key, nonce);
-    console.log(encryptedMessage.substring(0, 10));
     const first = BN254CurveWrapper.g1ScalarMul(this.G1, scalar);
     const second = BN254CurveWrapper.gtMul(
       BN254CurveWrapper.gtPow(

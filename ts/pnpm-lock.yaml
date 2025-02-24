@@ -4,18 +4,13 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
-patchedDependencies:
-  '@noble/curves':
-    hash: hkc2iup5sdkbbw6sbti5dhfeyu
-    path: patches/@noble__curves.patch
-
 importers:
 
   .:
     dependencies:
       '@noble/curves':
         specifier: ^1.8.1
-        version: 1.8.1(patch_hash=hkc2iup5sdkbbw6sbti5dhfeyu)
+        version: 1.8.1
       bigint-mod-arith:
         specifier: ^3.3.1
         version: 3.3.1
@@ -2074,7 +2069,7 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.0
 
-  '@noble/curves@1.8.1(patch_hash=hkc2iup5sdkbbw6sbti5dhfeyu)':
+  '@noble/curves@1.8.1':
     dependencies:
       '@noble/hashes': 1.7.1
 
