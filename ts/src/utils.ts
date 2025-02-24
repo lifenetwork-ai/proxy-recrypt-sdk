@@ -109,7 +109,7 @@ export function g2FromBytes(bytes: Uint8Array): { x: Fp2; y: Fp2 } {
   return { x, y };
 }
 
-function bytesToBigInt(bytes: Uint8Array): bigint {
+export function bytesToBigInt(bytes: Uint8Array): bigint {
   let hex = Array.from(bytes)
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
