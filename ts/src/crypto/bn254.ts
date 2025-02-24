@@ -18,16 +18,17 @@ export type GTElement = Fp12;
 
 // Example implementation showing the types
 export class BN254CurveWrapper {
-  // Generators
+  // Generator element in G1 group
   static G1Generator(): G1Point {
     return bn254.G1.ProjectivePoint.BASE;
   }
 
+  // Generator element in G2 group
   static G2Generator(): G2Point {
     return bn254.G2.ProjectivePoint.BASE;
   }
 
-  // Generate a new element in GT
+  // Generator element in GT(Fp12) group
   static GTBase(): GTElement {
     return bn254.fields.Fp12.ONE;
   }
