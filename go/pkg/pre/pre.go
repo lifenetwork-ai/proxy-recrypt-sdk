@@ -49,16 +49,22 @@ func (p *preScheme) SecondLevelEncryption(secretA *types.SecretKey, message stri
 	}
 
 	// generate random symmetric key
-	keyGT, key, _ := crypto.GenerateRandomSymmetricKeyFromGT(32)
+	keyGT, key, err := crypto.GenerateRandomSymmetricKeyFromGT(32)
+	if err != nil {
+		panic("error in key generation:" + err.Error())
+	}
 
 	// encrypt the message
 	encryptedMessage, err := crypto.EncryptAESGCM([]byte(message), key)
 
 	if err != nil {
-		panic("error in encryption")
+		panic("error in encryption:" + err.Error())
 	}
 
+	// g1^k
 	first := new(bn254.G1Affine).ScalarMultiplication(p.g1, scalar)
+
+	// m*Z^(a1*k)
 	secondTemp1 := new(bn254.GT).Exp(*p.Z(), secretA.First)
 	secondTemp := new(bn254.GT).Exp(*secondTemp1, scalar)
 	second := new(bn254.GT).Mul(keyGT, secondTemp)
@@ -78,7 +84,7 @@ func (p *preScheme) SecondLevelEncryption(secretA *types.SecretKey, message stri
 // It takes the second-level ciphertext and the re-encryption key as input.
 // It returns the re-encrypted(first-level) ciphertext.
 func (p *preScheme) ReEncryption(ciphertext *types.SecondLevelCipherText, reKey *bn254.G2Affine) *types.FirstLevelCipherText {
-	// compute the re-encryption
+	// compute the re-encryption of the key
 	first, err := bn254.Pair([]bn254.G1Affine{*ciphertext.EncryptedKey.First}, []bn254.G2Affine{*reKey})
 	if err != nil {
 		panic("error in re-encryption")
