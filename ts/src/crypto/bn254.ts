@@ -1,15 +1,13 @@
 // Core types from the library
 import { bn254 } from "@noble/curves/bn254";
 import { Fp, Fp12, Fp12Bls, Fp2 } from "@noble/curves/abstract/tower";
-import random from "crypto-random-bigint";
 import {
   AffinePoint,
   ProjConstructor,
   ProjPointType,
   weierstrassPoints,
 } from "@noble/curves/abstract/weierstrass";
-import * as bigintModArith from "bigint-mod-arith";
-import { g1ToBytes, g2FromBytes, g2ToBytes } from "../utils";
+import { bytesToBigInt, g1ToBytes, g2FromBytes, g2ToBytes } from "../utils";
 
 // G1 is a point on the base field (Fp)
 export type G1Point = ProjPointType<Fp>;
@@ -36,7 +34,11 @@ export class BN254CurveWrapper {
 
   // Generate a random GT element
   static generateRandomGTElement(): GTElement {
-    const randomScalar = random(32);
+    const randomBytes = new Uint8Array(32); // 256 bits
+
+    crypto.getRandomValues(randomBytes);
+    const randomScalar = bytesToBigInt(randomBytes);
+
     return bn254.fields.Fp12.mul(bn254.fields.Fp12.ONE, randomScalar);
   }
 
