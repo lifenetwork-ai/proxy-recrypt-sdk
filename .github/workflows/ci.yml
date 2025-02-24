@@ -4,8 +4,40 @@ on:
   push
 
 jobs:
-  test:
-    name: Run tests and collect coverage
+  test-go:
+    name: Run tests and collect coverage for Go lib
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+          cache: true
+          cache-dependency-path: './go/go.sum'
+
+      - name: Install dependencies
+        working-directory: ./go
+        run: go mod download
+
+      - name: Run tests with coverage
+        working-directory: ./go
+        run: go test -coverprofile=coverage.out -covermode=atomic ./...
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./go/coverage.out
+          flags: go
+          fail_ci_if_error: true
+
+  test-ts:
+    name: Run tests and collect coverage for Typescript lib
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -37,3 +69,6 @@ jobs:
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./ts/coverage/cobertura-coverage.xml
+          flags: typescript
+          fail_ci_if_error: true
