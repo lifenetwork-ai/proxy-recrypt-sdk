@@ -110,5 +110,5 @@ func WriteAsBase64IfNotExists(filename string, data []byte) error {
 		base64Form := base64.StdEncoding.EncodeToString(data)
 		return os.WriteFile(filename, []byte(base64Form), 0600)
 	}
-	return err
+	return nil
 }

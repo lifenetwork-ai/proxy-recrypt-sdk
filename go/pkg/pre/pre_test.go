@@ -1,16 +1,17 @@
-package pre
+package pre_test
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"github.com/tuantran-genetica/human-network-crypto-lib/pkg/pre"
 	"github.com/tuantran-genetica/human-network-crypto-lib/pkg/pre/mocks"
 	"github.com/tuantran-genetica/human-network-crypto-lib/pkg/pre/utils"
 )
 
 func TestPreFullFlow(t *testing.T) {
 	// Generate system parameters
-	scheme := NewPreScheme()
+	scheme := pre.NewPreScheme()
 	// Test setup
 	// Generate key pair for Alice and Bob
 	keyPairAlice := utils.GenerateRandomKeyPair(scheme.G2(), scheme.Z())
@@ -51,15 +52,13 @@ func TestMockPreFullFlow(t *testing.T) {
 
 	cipherText := scheme.SecondLevelEncryption(keyPairAlice.SecretKey, string(scheme.(*mocks.MockPreScheme).Message), scheme.(*mocks.MockPreScheme).Scalar)
 
-	// Store the second level encrypted key and encrypted data for mocks
-	// fmt.Println("first point", cipherText.EncryptedKey.First)
-	// SecondLevelEncryptedKeyFirstBytes := cipherText.EncryptedKey.First.RawBytes()
-	// SecondLevelEncryptedKeySecondBytes := cipherText.EncryptedKey.Second.Bytes()
-	// EncryptedDataBytes := []byte(cipherText.EncryptedMessage)
+	SecondLevelEncryptedKeyFirstBytes := cipherText.EncryptedKey.First.RawBytes()
+	SecondLevelEncryptedKeySecondBytes := cipherText.EncryptedKey.Second.Bytes()
+	EncryptedDataBytes := []byte(cipherText.EncryptedMessage)
 
-	// utils.WriteAsBase64IfNotExists("./mocks/second_encrypted_key_first.txt", SecondLevelEncryptedKeyFirstBytes[:])
-	// utils.WriteAsBase64IfNotExists("./mocks/second_encrypted_key_second.txt", SecondLevelEncryptedKeySecondBytes[:])
-	// utils.WriteAsBase64IfNotExists("./mocks/encrypted_data.txt", EncryptedDataBytes)
+	utils.WriteAsBase64IfNotExists("../../testdata/second_encrypted_key_first.txt", SecondLevelEncryptedKeyFirstBytes[:])
+	utils.WriteAsBase64IfNotExists("../../testdata/second_encrypted_key_second.txt", SecondLevelEncryptedKeySecondBytes[:])
+	utils.WriteAsBase64IfNotExists("../../testdata/encrypted_data.txt", EncryptedDataBytes)
 
 	// Proxy side
 	// Re-encrypt the message for Bob
@@ -73,7 +72,7 @@ func TestMockPreFullFlow(t *testing.T) {
 }
 
 func BenchmarkReEncryption(b *testing.B) {
-	scheme := NewPreScheme()
+	scheme := pre.NewPreScheme()
 	cipherText := utils.GenerateMockSecondLevelCipherText(500)
 	reKey := utils.GenerateRandomG2Elem()
 	for n := 0; n < b.N; n++ {
