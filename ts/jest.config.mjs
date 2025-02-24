@@ -14,5 +14,10 @@ export default {
     }]
   },
   transformIgnorePatterns: [],
+  collectCoverage: true,
+  coverageReporters: [
+    "text",
+    "cobertura"
+  ]
 
 }
