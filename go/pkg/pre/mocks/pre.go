@@ -7,6 +7,7 @@ import (
 
 	"github.com/consensys/gnark-crypto/ecc/bn254"
 	"github.com/tuantran-genetica/human-network-crypto-lib/pkg/crypto"
+	"github.com/tuantran-genetica/human-network-crypto-lib/pkg/pre"
 	"github.com/tuantran-genetica/human-network-crypto-lib/pkg/pre/types"
 	"github.com/tuantran-genetica/human-network-crypto-lib/pkg/pre/utils"
 )
@@ -26,30 +27,53 @@ type MockPreScheme struct {
 
 func NewMockPreScheme() types.PreScheme {
 	g1, g2, Z := utils.GenerateSystemParameters()
-
+	scheme := pre.NewPreScheme()
 	// Generate key pairs for Alice and Bob
 	aliceKeypair, err := LoadKeyPairFromFile("../../testdata/alice_keypair.json")
 	if err != nil {
-		panic(err)
+		err = SaveKeyPairToFile("../../testdata/alice_keypair.json")
+		if err != nil {
+			panic(err)
+		}
+		aliceKeypair, err = LoadKeyPairFromFile("../../testdata/alice_keypair.json")
+		if err != nil {
+			panic(err)
+		}
 	}
 	bobKeypair, err := LoadKeyPairFromFile("../../testdata/bob_keypair.json")
 	if err != nil {
-		panic(err)
+		err = SaveKeyPairToFile("../../testdata/bob_keypair.json")
+		if err != nil {
+			panic(err)
+		}
+		bobKeypair, err = LoadKeyPairFromFile("../../testdata/bob_keypair.json")
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	reKeyBase64FromFile, err := os.ReadFile("../../testdata/rekey.txt")
+	var rekeyBytes []byte
 	if err != nil {
-		panic(err)
-	}
-	rekeyBytes, err := base64.StdEncoding.DecodeString(string(reKeyBase64FromFile))
-	if err != nil {
-		panic(err)
+		reKey := scheme.GenerateReEncryptionKey(aliceKeypair.SecretKey, bobKeypair.PublicKey)
+		reKeyRawBytes := reKey.RawBytes()
+		err = utils.WriteAsBase64IfNotExists("../../testdata/rekey.txt", reKeyRawBytes[:])
+		if err != nil {
+			panic(err)
+		}
+		rekeyBytes = reKeyRawBytes[:]
+
+	} else {
+		rekeyBytes, err = base64.StdEncoding.DecodeString(string(reKeyBase64FromFile))
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	rekey := new(bn254.G2Affine)
 	rekey.SetBytes(rekeyBytes)
 
-	message, err := os.ReadFile("../../testdata/data.txt")
+	message, err := os.ReadFile("../../testdata/data/message.txt")
 	if err != nil {
 		panic(err)
 	}
@@ -60,14 +84,22 @@ func NewMockPreScheme() types.PreScheme {
 	}
 
 	symmetricKeyGtContent, err := os.ReadFile("../../testdata/symmetric_key_gt.txt")
+	var symmetricKeyGtBytes []byte
 	if err != nil {
-		panic(err)
+		randomGt := utils.GenerateRandomGTElem()
+		randomGtBytes := randomGt.Bytes()
+		err = utils.WriteAsBase64IfNotExists("../../testdata/symmetric_key_gt.txt", randomGtBytes[:])
+		if err != nil {
+			panic(err)
+		}
+		symmetricKeyGtBytes = randomGtBytes[:]
+	} else {
+		symmetricKeyGtBytes, err = base64.StdEncoding.DecodeString(string(symmetricKeyGtContent))
+		if err != nil {
+			panic(err)
+		}
 	}
 
-	symmetricKeyGtBytes, err := base64.StdEncoding.DecodeString(string(symmetricKeyGtContent))
-	if err != nil {
-		panic(err)
-	}
 	symmetricKeyGt := new(bn254.GT)
 	err = symmetricKeyGt.SetBytes(symmetricKeyGtBytes)
 	if err != nil {
@@ -106,14 +138,14 @@ func (m *MockPreScheme) SecondLevelEncryption(_ *types.SecretKey, _ string, _ *b
 	keyGTBytes := m.SymmetricKeyGT.Bytes()
 
 	// write to mocks folder if not exists
-	err := utils.WriteAsBase64IfNotExists("./mocks/symmetric_key_gt.txt", keyGTBytes[:])
+	err := utils.WriteAsBase64IfNotExists("../../testdata/symmetric_key_gt.txt", keyGTBytes[:])
 	if err != nil {
 		panic(err)
 	}
-	utils.WriteAsBase64IfNotExists("./mocks/symmetric_key.txt", m.SymmetricKey)
+	utils.WriteAsBase64IfNotExists("../../testdata/symmetric_key.txt", m.SymmetricKey)
 
 	encryptedMessage, _ := crypto.EncryptAESGCM(m.Message, m.SymmetricKey)
-	err = utils.WriteAsBase64IfNotExists("./mocks/encrypted_message.txt", encryptedMessage)
+	err = utils.WriteAsBase64IfNotExists("../../testdata/encrypted_message.txt", encryptedMessage)
 	if err != nil {
 		panic(err)
 	}
@@ -194,7 +226,13 @@ func (m *MockPreScheme) Z() *bn254.GT {
 func LoadMockScalar() (*big.Int, error) {
 	mockData, err := os.ReadFile("../../testdata/random_scalar.txt")
 	if err != nil {
-		return nil, err
+		randomScalar := utils.GenerateRandomScalar()
+		randomScalarBytes := randomScalar.Bytes()
+		err = utils.WriteAsBase64IfNotExists("../../testdata/random_scalar.txt", randomScalarBytes)
+		if err != nil {
+			return nil, err
+		}
+		return randomScalar, nil
 	}
 	decodedBytes, err := base64.StdEncoding.DecodeString(string(mockData))
 	if err != nil {
