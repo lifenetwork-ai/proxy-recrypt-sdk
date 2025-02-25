@@ -50,7 +50,6 @@ func GenerateRandomKeyPair(g *bn254.G2Affine, Z *bn254.GT) *types.KeyPair {
 		PublicKey: pk,
 		SecretKey: sk,
 	}
-
 }
 
 func GenerateRandomScalar() *big.Int {

@@ -37,3 +37,40 @@ jobs:
             - name: Run ESLint
               working-directory: ./ts
               run: pnpm lint
+
+    test-ts:
+        name: Run tests and collect coverage for Typescript lib
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0
+
+            - name: Install pnpm
+              uses: pnpm/action-setup@v2
+              with:
+                  version: 9
+
+            - name: Set up Node
+              uses: actions/setup-node@v4
+              with:
+                  node-version: "lts/*"
+                  cache: "pnpm"
+                  cache-dependency-path: "./ts/pnpm-lock.yaml"
+
+            - name: Install dependencies
+              working-directory: ./ts
+              run: pnpm install --frozen-lockfile
+
+            - name: Run tests
+              working-directory: ./ts
+              run: pnpm test
+
+            - name: Upload results to Codecov
+              uses: codecov/codecov-action@v5
+              with:
+                  token: ${{ secrets.CODECOV_TOKEN }}
+                  files: ./ts/coverage/cobertura-coverage.xml
+                  flags: typescript
+                  fail_ci_if_error: true

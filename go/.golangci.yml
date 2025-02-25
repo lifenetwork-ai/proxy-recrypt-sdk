@@ -4,7 +4,6 @@ linters:
         - dupl
         - errcheck
         - goconst
-        - gocyclo
         - gofmt
         - goimports
         - gosec
@@ -29,6 +28,8 @@ issues:
           linters:
               - dupl
               - gosec
+    exclude-dir:
+        - testdata
 
 linters-settings:
     dupl:
@@ -42,7 +43,7 @@ linters-settings:
         min-len: 2
         min-occurrences: 2
     govet:
-        check-shadowing: true
+        shadow: true
     misspell:
         locale: US
     nolintlint:
@@ -53,5 +54,3 @@ linters-settings:
 
 run:
     timeout: 5m
-    skip-dirs:
-        - vendor/
