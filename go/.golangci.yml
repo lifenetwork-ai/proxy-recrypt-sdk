@@ -28,7 +28,7 @@ issues:
           linters:
               - dupl
               - gosec
-    exclude-dir:
+    exclude-dirs:
         - testdata
 
 linters-settings:
