@@ -62,7 +62,6 @@ func NewMockPreScheme() types.PreScheme {
 			panic(err)
 		}
 		rekeyBytes = reKeyRawBytes[:]
-
 	} else {
 		rekeyBytes, err = base64.StdEncoding.DecodeString(string(reKeyBase64FromFile))
 		if err != nil {
@@ -71,7 +70,10 @@ func NewMockPreScheme() types.PreScheme {
 	}
 
 	rekey := new(bn254.G2Affine)
-	rekey.SetBytes(rekeyBytes)
+	_, err = rekey.SetBytes(rekeyBytes)
+	if err != nil {
+		panic(err)
+	}
 
 	message, err := os.ReadFile("../../testdata/data/message.txt")
 	if err != nil {
@@ -142,7 +144,11 @@ func (m *MockPreScheme) SecondLevelEncryption(_ *types.SecretKey, _ string, _ *b
 	if err != nil {
 		panic(err)
 	}
-	utils.WriteAsBase64IfNotExists("../../testdata/symmetric_key.txt", m.SymmetricKey)
+
+	err = utils.WriteAsBase64IfNotExists("../../testdata/symmetric_key.txt", m.SymmetricKey)
+	if err != nil {
+		panic(err)
+	}
 
 	encryptedMessage, _ := crypto.EncryptAESGCM(m.Message, m.SymmetricKey)
 	err = utils.WriteAsBase64IfNotExists("../../testdata/encrypted_message.txt", encryptedMessage)

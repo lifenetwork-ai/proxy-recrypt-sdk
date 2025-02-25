@@ -1,74 +1,70 @@
-name: Run tests and upload coverage
+name: Go CI
 
-on: 
-  push
-
+on:
+    push:
+        branches: [main, master]
+        path: "ts/**"
+    pull_request:
+        branches: [main, master]
+        path: "ts/**"
 jobs:
-  test-go:
-    name: Run tests and collect coverage for Go lib
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+    test-go:
+        name: Run tests and collect coverage for Go lib
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0
 
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: '1.22'
-          cache: true
-          cache-dependency-path: './go/go.sum'
+            - name: Set up Go
+              uses: actions/setup-go@v5
+              with:
+                  go-version: "1.22"
+                  cache: true
+                  cache-dependency-path: "./go/go.sum"
 
-      - name: Install dependencies
-        working-directory: ./go
-        run: go mod download
+            - name: Install dependencies
+              working-directory: ./go
+              run: go mod download
 
-      - name: Run tests with coverage
-        working-directory: ./go
-        run: go test -coverprofile=coverage.out -covermode=atomic ./...
+            - name: Run tests with coverage
+              working-directory: ./go
+              run: go test -coverprofile=coverage.out -covermode=atomic ./...
 
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v5
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          files: ./go/coverage.out
-          flags: go
-          fail_ci_if_error: true
+            - name: Upload coverage to Codecov
+              uses: codecov/codecov-action@v5
+              with:
+                  token: ${{ secrets.CODECOV_TOKEN }}
+                  files: ./go/coverage.out
+                  flags: go
+                  fail_ci_if_error: true
+    golangci:
+        name: Go linting
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
 
-  test-ts:
-    name: Run tests and collect coverage for Typescript lib
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+            - name: Set up Go
+              uses: actions/setup-go@v5
+              with:
+                  go-version: "1.22"
+                  cache: true
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: 9
+            - name: golangci-lint
+              uses: golangci/golangci-lint-action@v6
+              with:
+                  working-directory: ./go
+                  version: v1.60.3
+                  args: --timeout=5m
 
-      - name: Set up Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 'lts/*'
-          cache: 'pnpm'
-          cache-dependency-path: './ts/pnpm-lock.yaml'
+                  # Optional: show only new issues if it's a pull request
+                  only-new-issues: ${{ github.event_name == 'pull_request' }}
 
-      - name: Install dependencies
-        working-directory: ./ts
-        run: pnpm install --frozen-lockfile
+                  # Optional: if set to true, then all caching functionality will be completely disabled,
+                  # takes precedence over all other caching options.
+                  # skip-cache: true
 
-      - name: Run tests
-        working-directory: ./ts
-        run: pnpm test
-
-      - name: Upload results to Codecov
-        uses: codecov/codecov-action@v5
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          files: ./ts/coverage/cobertura-coverage.xml
-          flags: typescript
-          fail_ci_if_error: true
+                  # Optional: if set to true, then the action won't use any cache directories.
+                  # skip-pkg-cache: true
+                  # skip-build-cache: true
