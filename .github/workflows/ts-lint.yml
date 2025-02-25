@@ -2,9 +2,11 @@ name: TypeScript CI
 
 on:
     push:
-        branches: [main]
+        branches: [main, master]
+        path: "ts/**"
     pull_request:
-        branches: [main]
+        branches: [main, master]
+        path: "ts/**"
 
 jobs:
     lint:
