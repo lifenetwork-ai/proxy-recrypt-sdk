@@ -31,7 +31,7 @@ func GenerateSystemParameters() (g1 bn254.G1Affine, g2 bn254.G2Affine, Z bn254.G
 func SecretToPubkey(secret *types.SecretKey, g *bn254.G2Affine, Z *bn254.GT) *types.PublicKey {
 	return &types.PublicKey{
 		First:  new(bn254.GT).Exp(*Z, secret.First),
-		Second: g.ScalarMultiplicationBase(secret.Second),
+		Second: new(bn254.G2Affine).ScalarMultiplication(g, secret.Second),
 	}
 }
 
@@ -110,5 +110,5 @@ func WriteAsBase64IfNotExists(filename string, data []byte) error {
 		base64Form := base64.StdEncoding.EncodeToString(data)
 		return os.WriteFile(filename, []byte(base64Form), 0600)
 	}
-	return err
+	return nil
 }
