@@ -42,7 +42,6 @@ func (p *preScheme) GenerateReEncryptionKey(secretA *types.SecretKey, publicB *t
 // The scalar is used to randomize the encryption, should not be reused in other sessions.
 // It returns the ciphertext in the form of a pair of points in G1 and GT groups.
 func (p *preScheme) SecondLevelEncryption(secretA *types.SecretKey, message string, scalar *big.Int) (*types.SecondLevelSymmetricKey, []byte, error) {
-
 	// check if scalar is in the correct range
 	if scalar.Cmp(bn254.ID.ScalarField()) >= 0 {
 		return nil, nil, fmt.Errorf("scalar is out of range")

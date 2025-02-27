@@ -58,7 +58,7 @@ func TestMockPreFullFlow(t *testing.T) {
 
 	SecondLevelEncryptedKeyFirstBytes := encryptedKey.First.RawBytes()
 	SecondLevelEncryptedKeySecondBytes := encryptedKey.Second.Bytes()
-	EncryptedDataBytes := []byte(encryptedMessage)
+	EncryptedDataBytes := encryptedMessage
 
 	err = utils.WriteAsBase64IfNotExists("../../testdata/second_encrypted_key_first.txt", SecondLevelEncryptedKeyFirstBytes[:])
 	require.NoError(t, err)
@@ -82,7 +82,6 @@ func TestMockPreFullFlow(t *testing.T) {
 	// Decrypt the message
 	decryptedMessageAlice := scheme.DecryptSecondLevel(encryptedKey, encryptedMessage, keyPairAlice.SecretKey)
 	require.Equal(t, string(scheme.(*mocks.MockPreScheme).Message), decryptedMessageAlice)
-
 }
 
 func BenchmarkReEncryption(b *testing.B) {
@@ -108,5 +107,4 @@ func TestGenerateKeyPair(t *testing.T) {
 
 	require.Equal(t, pk.First, new(bn254.GT).Exp(*scheme.Z(), sk.First))
 	require.Equal(t, pk.Second, new(bn254.G2Affine).ScalarMultiplication(scheme.G2(), sk.Second))
-
 }
