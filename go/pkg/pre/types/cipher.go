@@ -16,18 +16,6 @@ type SecondLevelSymmetricKey struct {
 	Second *bn254.GT       // Second component of the key in GT group
 }
 
-// FirstLevelCipherText represents the first level encrypted message components
-type FirstLevelCipherText struct {
-	EncryptedKey     *FirstLevelSymmetricKey // The encrypted symmetric key
-	EncryptedMessage []byte                  // The encrypted message, encrypted with the symmetric key
-}
-
-// SecondLevelCipherText represents the second level encrypted message components
-type SecondLevelCipherText struct {
-	EncryptedKey     *SecondLevelSymmetricKey // The encrypted symmetric key
-	EncryptedMessage []byte                   // The encrypted message, encrypted with the symmetric key
-}
-
 // ToBytes serializes FirstLevelSymmetricKey to bytes
 func (k *FirstLevelSymmetricKey) ToBytes() []byte {
 	if k == nil {

@@ -128,7 +128,7 @@ func (m *MockPreScheme) GenerateReEncryptionKey(_ *types.SecretKey, _ *types.Pub
 	return new(bn254.G2Affine).ScalarMultiplication(m.BobKeyPair.PublicKey.Second, m.AliceKeyPair.SecretKey.First)
 }
 
-func (m *MockPreScheme) SecondLevelEncryption(_ *types.SecretKey, _ string, _ *big.Int) *types.SecondLevelCipherText {
+func (m *MockPreScheme) SecondLevelEncryption(_ *types.SecretKey, _ string, _ *big.Int) (*types.SecondLevelSymmetricKey, []byte, error) {
 	// Use pre-computed values instead of parameters
 	first := new(bn254.G1Affine).ScalarMultiplication(m.g1, m.Scalar)
 	secondTemp1 := new(bn254.GT).Exp(*m.z, m.AliceKeyPair.SecretKey.First)
@@ -154,35 +154,30 @@ func (m *MockPreScheme) SecondLevelEncryption(_ *types.SecretKey, _ string, _ *b
 		Second: second,
 	}
 
-	return &types.SecondLevelCipherText{
-		EncryptedKey:     encryptedKey,
-		EncryptedMessage: encryptedMessage,
-	}
+	return encryptedKey, encryptedMessage, nil
+
 }
 
-func (m *MockPreScheme) ReEncryption(ciphertext *types.SecondLevelCipherText, reKey *bn254.G2Affine) *types.FirstLevelCipherText {
-	first, _ := bn254.Pair([]bn254.G1Affine{*ciphertext.EncryptedKey.First}, []bn254.G2Affine{*reKey})
+func (m *MockPreScheme) ReEncryption(encryptedKey *types.SecondLevelSymmetricKey, reKey *bn254.G2Affine) *types.FirstLevelSymmetricKey {
+	first, _ := bn254.Pair([]bn254.G1Affine{*encryptedKey.First}, []bn254.G2Affine{*reKey})
 
 	newEncryptedKey := &types.FirstLevelSymmetricKey{
 		First:  &first,
-		Second: ciphertext.EncryptedKey.Second,
+		Second: encryptedKey.Second,
 	}
 
-	return &types.FirstLevelCipherText{
-		EncryptedKey:     newEncryptedKey,
-		EncryptedMessage: ciphertext.EncryptedMessage,
-	}
+	return newEncryptedKey
 }
 
-func (m *MockPreScheme) DecryptFirstLevel(ciphertext *types.FirstLevelCipherText, _ *types.SecretKey) string {
+func (m *MockPreScheme) DecryptFirstLevel(encryptedKey *types.FirstLevelSymmetricKey, encryptedMessage []byte, _ *types.SecretKey) string {
 	// Use pre-computed Bob's secret key instead of parameter
 	order := bn254.ID.ScalarField()
-	temp := new(bn254.GT).Exp(*ciphertext.EncryptedKey.First, new(big.Int).ModInverse(m.BobKeyPair.SecretKey.Second, order))
+	temp := new(bn254.GT).Exp(*encryptedKey.First, new(big.Int).ModInverse(m.BobKeyPair.SecretKey.Second, order))
 
-	symmetricKeyGT := new(bn254.GT).Div(ciphertext.EncryptedKey.Second, temp)
+	symmetricKeyGT := new(bn254.GT).Div(encryptedKey.Second, temp)
 	symmetricKey, _ := crypto.DeriveKeyFromGT(symmetricKeyGT, 32)
 
-	decryptedMessage, _ := crypto.DecryptAESGCM(ciphertext.EncryptedMessage, symmetricKey)
+	decryptedMessage, _ := crypto.DecryptAESGCM(encryptedMessage, symmetricKey)
 	return string(decryptedMessage)
 }
 

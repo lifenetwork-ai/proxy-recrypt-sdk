@@ -24,15 +24,16 @@ func TestPreFullFlow(t *testing.T) {
 	reKey := scheme.GenerateReEncryptionKey(keyPairAlice.SecretKey, keyPairBob.PublicKey)
 	// Alice encrypt a message
 	message := "Life is full of unexpected moments that shape who we become. Each day brings new opportunities to learn, grow, and discover something amazing about ourselves and the world around us. When we embrace these challenges with an open mind and willing heart, we find strength we never knew we had. Remember that every step forward, no matter how small, is progress toward your dreams today."
-	cipherText := scheme.SecondLevelEncryption(keyPairAlice.SecretKey, message, utils.GenerateRandomScalar())
+	encryptedKey, encryptedMessage, err := scheme.SecondLevelEncryption(keyPairAlice.SecretKey, message, utils.GenerateRandomScalar())
+	require.NoError(t, err)
 
 	// Proxy side
 	// Re-encrypt the message for Bob
-	firstLevelCipherText := scheme.ReEncryption(cipherText, reKey)
+	firstLevelCipherText := scheme.ReEncryption(encryptedKey, reKey)
 
 	// Bob side
 	// Decrypt the message
-	decryptedMessage := scheme.DecryptFirstLevel(firstLevelCipherText, keyPairBob.SecretKey)
+	decryptedMessage := scheme.DecryptFirstLevel(firstLevelCipherText, encryptedMessage, keyPairBob.SecretKey)
 
 	require.Equal(t, message, decryptedMessage)
 }
@@ -52,11 +53,13 @@ func TestMockPreFullFlow(t *testing.T) {
 
 	require.Equal(t, reKeyBytes, scheme.(*mocks.MockPreScheme).ReKey.RawBytes())
 
-	cipherText := scheme.SecondLevelEncryption(keyPairAlice.SecretKey, string(scheme.(*mocks.MockPreScheme).Message), scheme.(*mocks.MockPreScheme).Scalar)
+	encryptedKey, encryptedMessage, err := scheme.SecondLevelEncryption(keyPairAlice.SecretKey, string(scheme.(*mocks.MockPreScheme).Message), scheme.(*mocks.MockPreScheme).Scalar)
 
-	SecondLevelEncryptedKeyFirstBytes := cipherText.EncryptedKey.First.RawBytes()
-	SecondLevelEncryptedKeySecondBytes := cipherText.EncryptedKey.Second.Bytes()
-	EncryptedDataBytes := []byte(cipherText.EncryptedMessage)
+	require.NoError(t, err)
+
+	SecondLevelEncryptedKeyFirstBytes := encryptedKey.First.RawBytes()
+	SecondLevelEncryptedKeySecondBytes := encryptedKey.Second.Bytes()
+	EncryptedDataBytes := []byte(encryptedMessage)
 
 	utils.WriteAsBase64IfNotExists("../../testdata/second_encrypted_key_first.txt", SecondLevelEncryptedKeyFirstBytes[:])
 	utils.WriteAsBase64IfNotExists("../../testdata/second_encrypted_key_second.txt", SecondLevelEncryptedKeySecondBytes[:])
@@ -64,11 +67,11 @@ func TestMockPreFullFlow(t *testing.T) {
 
 	// Proxy side
 	// Re-encrypt the message for Bob
-	firstLevelCipherText := scheme.ReEncryption(cipherText, reKey)
+	firstLevelCipherText := scheme.ReEncryption(encryptedKey, reKey)
 
 	// Bob side
 	// Decrypt the message
-	decryptedMessage := scheme.DecryptFirstLevel(firstLevelCipherText, keyPairBob.SecretKey)
+	decryptedMessage := scheme.DecryptFirstLevel(firstLevelCipherText, encryptedMessage, keyPairBob.SecretKey)
 
 	require.Equal(t, string(scheme.(*mocks.MockPreScheme).Message), decryptedMessage)
 }
