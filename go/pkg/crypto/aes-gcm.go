@@ -13,7 +13,6 @@ func EncryptAESGCM(message []byte, key []byte) ([]byte, error) {
 		return nil, fmt.Errorf("invalid key size: %d", len(key))
 	}
 
-	byteMsg := []byte(message)
 	block, err := aes.NewCipher(key)
 	if err != nil {
 		return nil, fmt.Errorf("could not create new cipher: %v", err)
@@ -21,11 +20,9 @@ func EncryptAESGCM(message []byte, key []byte) ([]byte, error) {
 
 	// Generate a random nonce
 	nonce := make([]byte, 12)
-	if _, err := io.ReadFull(rand.Reader, nonce); err != nil {
+	if _, err = io.ReadFull(rand.Reader, nonce); err != nil {
 		return nil, fmt.Errorf("could not generate nonce: %v", err)
 	}
-
-	fmt.Println("nonce: ", nonce)
 
 	// Create AEAD cipher
 	aead, err := cipher.NewGCM(block)
@@ -34,7 +31,7 @@ func EncryptAESGCM(message []byte, key []byte) ([]byte, error) {
 	}
 
 	// Encrypt and authenticate
-	ciphertext := aead.Seal(nonce, nonce, byteMsg, nil)
+	ciphertext := aead.Seal(nonce, nonce, message, nil)
 	return ciphertext, nil
 }
 

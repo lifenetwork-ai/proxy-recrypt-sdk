@@ -44,9 +44,16 @@ func (k *FirstLevelSymmetricKey) FromBytes(data []byte) *FirstLevelSymmetricKey 
 	}
 
 	k.First = new(bn254.GT)
-	k.First.SetBytes(data[:384])
+	err := k.First.SetBytes(data[:384])
+	if err != nil {
+		panic(err)
+	}
+
 	k.Second = new(bn254.GT)
-	k.Second.SetBytes(data[384:])
+	err = k.Second.SetBytes(data[384:])
+	if err != nil {
+		panic(err)
+	}
 
 	return k
 }
@@ -79,9 +86,16 @@ func (k *SecondLevelSymmetricKey) FromBytes(data []byte) *SecondLevelSymmetricKe
 	}
 
 	k.First = new(bn254.G1Affine)
-	k.First.SetBytes(data[:32])
+	_, err := k.First.SetBytes(data[:32])
+	if err != nil {
+		panic(err)
+	}
+
 	k.Second = new(bn254.GT)
-	k.Second.SetBytes(data[32:])
+	err = k.Second.SetBytes(data[32:])
+	if err != nil {
+		panic(err)
+	}
 
 	return k
 }

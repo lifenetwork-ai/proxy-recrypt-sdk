@@ -39,7 +39,6 @@ func TestPreFullFlow(t *testing.T) {
 }
 
 func TestMockPreFullFlow(t *testing.T) {
-
 	scheme := mocks.NewMockPreScheme()
 	// Test setup
 	// Generate key pair for Alice and Bob
@@ -61,9 +60,14 @@ func TestMockPreFullFlow(t *testing.T) {
 	SecondLevelEncryptedKeySecondBytes := encryptedKey.Second.Bytes()
 	EncryptedDataBytes := []byte(encryptedMessage)
 
-	utils.WriteAsBase64IfNotExists("../../testdata/second_encrypted_key_first.txt", SecondLevelEncryptedKeyFirstBytes[:])
-	utils.WriteAsBase64IfNotExists("../../testdata/second_encrypted_key_second.txt", SecondLevelEncryptedKeySecondBytes[:])
-	utils.WriteAsBase64IfNotExists("../../testdata/encrypted_data.txt", EncryptedDataBytes)
+	err = utils.WriteAsBase64IfNotExists("../../testdata/second_encrypted_key_first.txt", SecondLevelEncryptedKeyFirstBytes[:])
+	require.NoError(t, err)
+
+	err = utils.WriteAsBase64IfNotExists("../../testdata/second_encrypted_key_second.txt", SecondLevelEncryptedKeySecondBytes[:])
+	require.NoError(t, err)
+
+	err = utils.WriteAsBase64IfNotExists("../../testdata/encrypted_data.txt", EncryptedDataBytes)
+	require.NoError(t, err)
 
 	// Proxy side
 	// Re-encrypt the message for Bob
