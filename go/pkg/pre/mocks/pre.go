@@ -190,6 +190,20 @@ func (m *MockPreScheme) DecryptFirstLevel(encryptedKey *types.FirstLevelSymmetri
 	return string(decryptedMessage)
 }
 
+func (m *MockPreScheme) DecryptSecondLevel(encryptedKey *types.SecondLevelSymmetricKey, encryptedMessage []byte, _ *types.SecretKey) string {
+	// Use pre-computed Bob's secret key instead of parameter
+	temp, err := bn254.Pair([]bn254.G1Affine{*encryptedKey.First}, []bn254.G2Affine{*m.G2()})
+	if err != nil {
+		panic(err)
+	}
+
+	symmetricKeyGT := new(bn254.GT).Div(encryptedKey.Second, new(bn254.GT).Exp(temp, m.AliceKeyPair.SecretKey.First))
+	symmetricKey, _ := crypto.DeriveKeyFromGT(symmetricKeyGT, 32)
+
+	decryptedMessage, _ := crypto.DecryptAESGCM(encryptedMessage, symmetricKey)
+	return string(decryptedMessage)
+}
+
 func (m *MockPreScheme) SecretToPubkey(secret *types.SecretKey) *types.PublicKey {
 	return utils.SecretToPubkey(secret, m.g2, m.z)
 }

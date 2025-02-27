@@ -76,8 +76,13 @@ func TestMockPreFullFlow(t *testing.T) {
 	// Bob side
 	// Decrypt the message
 	decryptedMessage := scheme.DecryptFirstLevel(firstLevelCipherText, encryptedMessage, keyPairBob.SecretKey)
-
 	require.Equal(t, string(scheme.(*mocks.MockPreScheme).Message), decryptedMessage)
+
+	// Alice side
+	// Decrypt the message
+	decryptedMessageAlice := scheme.DecryptSecondLevel(encryptedKey, encryptedMessage, keyPairAlice.SecretKey)
+	require.Equal(t, string(scheme.(*mocks.MockPreScheme).Message), decryptedMessageAlice)
+
 }
 
 func BenchmarkReEncryption(b *testing.B) {

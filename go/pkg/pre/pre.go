@@ -101,9 +101,20 @@ func (p *preScheme) SecretToPubkey(secret *types.SecretKey) *types.PublicKey {
 	return utils.SecretToPubkey(secret, p.g2, p.z)
 }
 
-// Decrypt first-level ciphertext
+// Decrypt with first-level encrypted key
 func (p *preScheme) DecryptFirstLevel(encryptedKey *types.FirstLevelSymmetricKey, encryptedMessage []byte, secretKey *types.SecretKey) string {
 	symmetricKey, err := p.decryptFirstLevelKey(encryptedKey, secretKey)
+	if err != nil {
+		panic("error in deriving key")
+	}
+
+	decryptedMessage, _ := crypto.DecryptAESGCM(encryptedMessage, symmetricKey)
+	return string(decryptedMessage)
+}
+
+// Decrypt with second-level encrypted key
+func (p *preScheme) DecryptSecondLevel(encryptedKey *types.SecondLevelSymmetricKey, encryptedMessage []byte, secretKey *types.SecretKey) string {
+	symmetricKey, err := p.decryptSecondLevelKey(encryptedKey, secretKey)
 	if err != nil {
 		panic("error in deriving key")
 	}
@@ -119,6 +130,24 @@ func (p *preScheme) decryptFirstLevelKey(encryptedKey *types.FirstLevelSymmetric
 
 	symmetricKeyGT := new(bn254.GT).Div(encryptedKey.Second, temp)
 
+	symmetricKey, err := crypto.DeriveKeyFromGT(symmetricKeyGT, 32)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to derive key: %v", err)
+	}
+
+	return symmetricKey, nil
+}
+
+// Decrypt second-level encrypted symmetric key
+// Supposed to run by the original encryptor
+func (p *preScheme) decryptSecondLevelKey(encryptedKey *types.SecondLevelSymmetricKey, secretKey *types.SecretKey) ([]byte, error) {
+	temp, err := bn254.Pair([]bn254.G1Affine{*encryptedKey.First}, []bn254.G2Affine{*p.g2})
+	if err != nil {
+		return nil, fmt.Errorf("error in pairing")
+	}
+
+	symmetricKeyGT := new(bn254.GT).Div(encryptedKey.Second, new(bn254.GT).Exp(temp, secretKey.First))
 	symmetricKey, err := crypto.DeriveKeyFromGT(symmetricKeyGT, 32)
 
 	if err != nil {

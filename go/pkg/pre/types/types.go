@@ -100,11 +100,15 @@ type PreScheme interface {
 	// SecretToPubkey derives a public key from a secret key
 	SecretToPubkey(secret *SecretKey) *PublicKey
 
-	// DecryptFirstLevel decrypts a first-level ciphertext
+	// DecryptFirstLevel decrypts message using a first-level encrypted key
 	// Takes an encrypted key, encrypted message, and a secret key
 	// Returns the decrypted message as a string
 	DecryptFirstLevel(encryptedKey *FirstLevelSymmetricKey, encryptedMessage []byte, secretKey *SecretKey) string
 
+	// DecryptSecondLevel decrypts message using a second-level encrypted key
+	// Takes an encrypted key, encrypted message, and a secret key
+	// Returns the decrypted message as a string
+	DecryptSecondLevel(encryptedKey *SecondLevelSymmetricKey, encryptedMessage []byte, secretKey *SecretKey) string
 	IGet
 }
 
