@@ -2,6 +2,8 @@ package types
 
 import (
 	"bytes"
+	"encoding/hex"
+	"fmt"
 
 	"github.com/consensys/gnark-crypto/ecc/bn254"
 )
@@ -98,4 +100,64 @@ func (k *SecondLevelSymmetricKey) FromBytes(data []byte) *SecondLevelSymmetricKe
 	}
 
 	return k
+}
+
+// String returns hex encoded string representation
+func (k *FirstLevelSymmetricKey) String() string {
+	if k == nil {
+		return ""
+	}
+	return hex.EncodeToString(k.ToBytes())
+}
+
+// FromString decodes hex string into FirstLevelSymmetricKey
+func (k *FirstLevelSymmetricKey) FromString(s string) error {
+	if k == nil {
+		return fmt.Errorf("nil receiver")
+	}
+	if s == "" {
+		return nil
+	}
+
+	data, err := hex.DecodeString(s)
+	if err != nil {
+		return fmt.Errorf("failed to decode hex string: %w", err)
+	}
+
+	if len(data) != 768 { // 384 bytes for each GT element
+		return fmt.Errorf("invalid data length for FirstLevelSymmetricKey: expected 768, got %d", len(data))
+	}
+
+	k.FromBytes(data)
+	return nil
+}
+
+// String returns hex encoded string representation
+func (k *SecondLevelSymmetricKey) String() string {
+	if k == nil {
+		return ""
+	}
+	return hex.EncodeToString(k.ToBytes())
+}
+
+// FromString decodes hex string into SecondLevelSymmetricKey
+func (k *SecondLevelSymmetricKey) FromString(s string) error {
+	if k == nil {
+		return fmt.Errorf("nil receiver")
+	}
+	if s == "" {
+		return nil
+	}
+
+	data, err := hex.DecodeString(s)
+	if err != nil {
+		return fmt.Errorf("failed to decode hex string: %w", err)
+	}
+
+	if len(data) != 416 {
+		return fmt.Errorf("invalid data length for SecondLevelSymmetricKey: expected 416, got %d", len(data))
+	}
+
+	k.FromBytes(data)
+	return nil
 }
