@@ -2,6 +2,7 @@ package mocks
 
 import (
 	"encoding/base64"
+	"fmt"
 	"math/big"
 	"os"
 
@@ -29,35 +30,35 @@ func NewMockPreScheme() types.PreScheme {
 	g1, g2, Z := utils.GenerateSystemParameters()
 	scheme := pre.NewPreScheme()
 	// Generate key pairs for Alice and Bob
-	aliceKeypair, err := LoadKeyPairFromFile("../../testdata/alice_keypair.json")
+	aliceKeypair, err := LoadKeyPairFromFile("../../../testdata/alice_keypair.json")
 	if err != nil {
-		err = SaveKeyPairToFile("../../testdata/alice_keypair.json")
+		err = SaveKeyPairToFile("../../../testdata/alice_keypair.json")
 		if err != nil {
 			panic(err)
 		}
-		aliceKeypair, err = LoadKeyPairFromFile("../../testdata/alice_keypair.json")
+		aliceKeypair, err = LoadKeyPairFromFile("../../../testdata/alice_keypair.json")
 		if err != nil {
 			panic(err)
 		}
 	}
-	bobKeypair, err := LoadKeyPairFromFile("../../testdata/bob_keypair.json")
+	bobKeypair, err := LoadKeyPairFromFile("../../../testdata/bob_keypair.json")
 	if err != nil {
-		err = SaveKeyPairToFile("../../testdata/bob_keypair.json")
+		err = SaveKeyPairToFile("../../../testdata/bob_keypair.json")
 		if err != nil {
 			panic(err)
 		}
-		bobKeypair, err = LoadKeyPairFromFile("../../testdata/bob_keypair.json")
+		bobKeypair, err = LoadKeyPairFromFile("../../../testdata/bob_keypair.json")
 		if err != nil {
 			panic(err)
 		}
 	}
 
-	reKeyBase64FromFile, err := os.ReadFile("../../testdata/rekey.txt")
+	reKeyBase64FromFile, err := os.ReadFile("../../../testdata/rekey.txt")
 	var rekeyBytes []byte
 	if err != nil {
 		reKey := scheme.GenerateReEncryptionKey(aliceKeypair.SecretKey, bobKeypair.PublicKey)
 		reKeyRawBytes := reKey.RawBytes()
-		err = utils.WriteAsBase64IfNotExists("../../testdata/rekey.txt", reKeyRawBytes[:])
+		err = utils.WriteAsBase64IfNotExists("../../../testdata/rekey.txt", reKeyRawBytes[:])
 		if err != nil {
 			panic(err)
 		}
@@ -75,7 +76,12 @@ func NewMockPreScheme() types.PreScheme {
 		panic(err)
 	}
 
-	message, err := os.ReadFile("../../testdata/data/message.txt")
+	messageContent, err := os.ReadFile("../../../testdata/data/message.txt")
+	if err != nil {
+		panic(err)
+	}
+
+	message, err := base64.StdEncoding.DecodeString(string(messageContent))
 	if err != nil {
 		panic(err)
 	}
@@ -85,12 +91,12 @@ func NewMockPreScheme() types.PreScheme {
 		panic(err)
 	}
 
-	symmetricKeyGtContent, err := os.ReadFile("../../testdata/symmetric_key_gt.txt")
+	symmetricKeyGtContent, err := os.ReadFile("../../../testdata/symmetric_key_gt.txt")
 	var symmetricKeyGtBytes []byte
 	if err != nil {
 		randomGt := utils.GenerateRandomGTElem()
 		randomGtBytes := randomGt.Bytes()
-		err = utils.WriteAsBase64IfNotExists("../../testdata/symmetric_key_gt.txt", randomGtBytes[:])
+		err = utils.WriteAsBase64IfNotExists("../../../testdata/symmetric_key_gt.txt", randomGtBytes[:])
 		if err != nil {
 			panic(err)
 		}
@@ -140,22 +146,20 @@ func (m *MockPreScheme) SecondLevelEncryption(_ *types.SecretKey, _ string, _ *b
 	keyGTBytes := m.SymmetricKeyGT.Bytes()
 
 	// write to mocks folder if not exists
-	err := utils.WriteAsBase64IfNotExists("../../testdata/symmetric_key_gt.txt", keyGTBytes[:])
+	err := utils.WriteAsBase64IfNotExists("../../../testdata/symmetric_key_gt.txt", keyGTBytes[:])
 	if err != nil {
 		panic(err)
 	}
 
-	err = utils.WriteAsBase64IfNotExists("../../testdata/symmetric_key.txt", m.SymmetricKey)
-	if err != nil {
-		panic(err)
-	}
-	err = utils.WriteAsBase64IfNotExists("../../testdata/symmetric_key.txt", m.SymmetricKey)
+	err = utils.WriteAsBase64IfNotExists("../../../testdata/symmetric_key.txt", m.SymmetricKey)
 	if err != nil {
 		panic(err)
 	}
 
-	encryptedMessage, _ := crypto.EncryptAESGCM(m.Message, m.SymmetricKey)
-	err = utils.WriteAsBase64IfNotExists("../../testdata/encrypted_message.txt", encryptedMessage)
+	encryptedMessage, _ := crypto.EncryptAESGCM(m.Message, m.SymmetricKey, &crypto.AESGCMOptions{
+		Mock: true,
+	})
+	err = utils.WriteAsBase64IfNotExists("../../../testdata/encrypted_message.txt", encryptedMessage)
 	if err != nil {
 		panic(err)
 	}
@@ -181,9 +185,14 @@ func (m *MockPreScheme) ReEncryption(encryptedKey *types.SecondLevelSymmetricKey
 func (m *MockPreScheme) DecryptFirstLevel(encryptedKey *types.FirstLevelSymmetricKey, encryptedMessage []byte, _ *types.SecretKey) string {
 	// Use pre-computed Bob's secret key instead of parameter
 	order := bn254.ID.ScalarField()
+	fmt.Println("order: ", order)
+	fmt.Println("scalar: ", new(big.Int).ModInverse(m.BobKeyPair.SecretKey.Second, order))
+	fmt.Println("bob key: ", m.BobKeyPair.SecretKey.Second)
+	fmt.Println("encrypted key first: ", encryptedKey.First.Bytes())
 	temp := new(bn254.GT).Exp(*encryptedKey.First, new(big.Int).ModInverse(m.BobKeyPair.SecretKey.Second, order))
-
+	fmt.Println("temp", temp.Bytes())
 	symmetricKeyGT := new(bn254.GT).Div(encryptedKey.Second, temp)
+	// fmt.Println("encrypted key first: ", encryptedKey.First.Bytes())
 	symmetricKey, _ := crypto.DeriveKeyFromGT(symmetricKeyGT, 32)
 
 	decryptedMessage, _ := crypto.DecryptAESGCM(encryptedMessage, symmetricKey)
@@ -242,11 +251,11 @@ func (m *MockPreScheme) Z() *bn254.GT {
 }
 
 func LoadMockScalar() (*big.Int, error) {
-	mockData, err := os.ReadFile("../../testdata/random_scalar.txt")
+	mockData, err := os.ReadFile("../../../testdata/random_scalar.txt")
 	if err != nil {
 		randomScalar := utils.GenerateRandomScalar()
 		randomScalarBytes := randomScalar.Bytes()
-		err = utils.WriteAsBase64IfNotExists("../../testdata/random_scalar.txt", randomScalarBytes)
+		err = utils.WriteAsBase64IfNotExists("../../../testdata/random_scalar.txt", randomScalarBytes)
 		if err != nil {
 			return nil, err
 		}

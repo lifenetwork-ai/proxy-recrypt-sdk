@@ -86,6 +86,10 @@ func GenerateMockSecondLevelCipherText(_ int) *types.SecondLevelSymmetricKey {
 	}
 }
 
+func GenerateMockNonce() []byte {
+	return []byte{223, 226, 69, 90, 252, 126, 59, 176, 98, 14, 194, 123}
+}
+
 // GenerateRandomString creates a cryptographically secure random string of fixed length
 func GenerateRandomString(length int) string {
 	// Calculate number of bytes needed for requested length

@@ -1,6 +1,7 @@
 package pre_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/consensys/gnark-crypto/ecc/bn254"
@@ -42,8 +43,8 @@ func TestMockPreFullFlow(t *testing.T) {
 	scheme := mocks.NewMockPreScheme()
 	// Test setup
 	// Generate key pair for Alice and Bob
-	keyPairAlice := utils.GenerateRandomKeyPair(scheme.G2(), scheme.Z())
-	keyPairBob := utils.GenerateRandomKeyPair(scheme.G2(), scheme.Z())
+	keyPairAlice := scheme.(*mocks.MockPreScheme).AliceKeyPair
+	keyPairBob := scheme.(*mocks.MockPreScheme).BobKeyPair
 
 	// Alice side
 	// Generate re-encryption key for Alice->Bob
@@ -58,28 +59,30 @@ func TestMockPreFullFlow(t *testing.T) {
 
 	SecondLevelEncryptedKeyFirstBytes := encryptedKey.First.RawBytes()
 	SecondLevelEncryptedKeySecondBytes := encryptedKey.Second.Bytes()
-	EncryptedDataBytes := encryptedMessage
 
-	err = utils.WriteAsBase64IfNotExists("../../testdata/second_encrypted_key_first.txt", SecondLevelEncryptedKeyFirstBytes[:])
+	err = utils.WriteAsBase64IfNotExists("../../../testdata/second_encrypted_key_first.txt", SecondLevelEncryptedKeyFirstBytes[:])
 	require.NoError(t, err)
 
-	err = utils.WriteAsBase64IfNotExists("../../testdata/second_encrypted_key_second.txt", SecondLevelEncryptedKeySecondBytes[:])
-	require.NoError(t, err)
-
-	err = utils.WriteAsBase64IfNotExists("../../testdata/encrypted_data.txt", EncryptedDataBytes)
+	err = utils.WriteAsBase64IfNotExists("../../../testdata/second_encrypted_key_second.txt", SecondLevelEncryptedKeySecondBytes[:])
 	require.NoError(t, err)
 
 	// Proxy side
 	// Re-encrypt the message for Bob
-	firstLevelCipherText := scheme.ReEncryption(encryptedKey, reKey)
+	firstLevelEncryptedKey := scheme.ReEncryption(encryptedKey, reKey)
+	firstLevelEncryptedKeyFirstBytes := firstLevelEncryptedKey.First.Bytes()
+	firstLevelEncryptedKeySecondBytes := firstLevelEncryptedKey.Second.Bytes()
+	err = utils.WriteAsBase64IfNotExists("../../../testdata/first_encrypted_key_first.txt", firstLevelEncryptedKeyFirstBytes[:])
+	require.NoError(t, err)
+	err = utils.WriteAsBase64IfNotExists("../../../testdata/first_encrypted_key_second.txt", firstLevelEncryptedKeySecondBytes[:])
+	require.NoError(t, err)
 
 	// Bob side
 	// Decrypt the message
-	decryptedMessage := scheme.DecryptFirstLevel(firstLevelCipherText, encryptedMessage, keyPairBob.SecretKey)
+	decryptedMessage := scheme.DecryptFirstLevel(firstLevelEncryptedKey, encryptedMessage, keyPairBob.SecretKey)
 	require.Equal(t, string(scheme.(*mocks.MockPreScheme).Message), decryptedMessage)
 
 	// Alice side
-	// Decrypt the message
+	// Decrypt her own message
 	decryptedMessageAlice := scheme.DecryptSecondLevel(encryptedKey, encryptedMessage, keyPairAlice.SecretKey)
 	require.Equal(t, string(scheme.(*mocks.MockPreScheme).Message), decryptedMessageAlice)
 }
@@ -107,4 +110,22 @@ func TestGenerateKeyPair(t *testing.T) {
 
 	require.Equal(t, pk.First, new(bn254.GT).Exp(*scheme.Z(), sk.First))
 	require.Equal(t, pk.Second, new(bn254.G2Affine).ScalarMultiplication(scheme.G2(), sk.Second))
+}
+
+func TestPow(t *testing.T) {
+	scheme := mocks.NewMockPreScheme()
+
+	scalar := scheme.(*mocks.MockPreScheme).Scalar
+
+	Z := scheme.Z()
+	g1 := scheme.G1()
+	g2 := scheme.G2()
+
+	// Z^scalar
+	ZScalar := new(bn254.GT).Exp(*Z, scalar)
+	fmt.Println("Z", Z.Bytes())
+	fmt.Println("g1", g1.RawBytes())
+	fmt.Println("g2", g2.RawBytes())
+	fmt.Println("scalar", scalar)
+	fmt.Println("Z^scalar", ZScalar.Bytes())
 }

@@ -9,7 +9,7 @@ import (
 )
 
 type FirstLevelSymmetricKey struct {
-	First  *bn254.GT // First component of the key in G1 group
+	First  *bn254.GT // First component of the key in GT group
 	Second *bn254.GT // Second component of the key in GT group
 }
 

@@ -54,7 +54,7 @@ func (p *preScheme) SecondLevelEncryption(secretA *types.SecretKey, message stri
 	}
 
 	// encrypt the message
-	encryptedMessage, err := crypto.EncryptAESGCM([]byte(message), key)
+	encryptedMessage, err := crypto.EncryptAESGCM([]byte(message), key, nil)
 
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to encrypt message: %v", err)

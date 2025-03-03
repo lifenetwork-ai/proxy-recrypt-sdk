@@ -7,7 +7,14 @@ import {
   ProjPointType,
   weierstrassPoints,
 } from "@noble/curves/abstract/weierstrass";
-import { bytesToBigInt, g1ToBytes, g2FromBytes, g2ToBytes } from "../utils";
+import {
+  bytesToBigInt,
+  fp12FromBytes,
+  fp12ToBytes,
+  g1ToBytes,
+  g2FromBytes,
+  g2ToBytes,
+} from "../utils";
 
 // G1 is a point on the base field (Fp)
 export type G1Point = ProjPointType<Fp>;
@@ -86,14 +93,16 @@ export class BN254CurveWrapper {
   }
 
   static GTToBytes(e: GTElement): Uint8Array {
-    return bn254.fields.Fp12.toBytes(e);
+    return fp12ToBytes(e, bn254.fields.Fp);
   }
 
   static GTFromBytes(bytes: Uint8Array): GTElement {
-    const Fp6 = bn254.fields.Fp6;
-    return {
-      c0: Fp6.fromBytes(bytes.subarray(0, Fp6.BYTES)),
-      c1: Fp6.fromBytes(bytes.subarray(Fp6.BYTES)),
-    };
+    return fp12FromBytes(
+      bytes,
+      bn254.fields.Fp,
+      bn254.fields.Fp2,
+      bn254.fields.Fp6,
+      bn254.fields.Fp12
+    );
   }
 }

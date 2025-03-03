@@ -1,7 +1,17 @@
 const crypto = globalThis.crypto;
 
+/**
+ * Encrypts data using AES-GCM and prepends the nonce to the ciphertext.
+ *
+ * @param message Data to encrypt
+ * @param key Encryption key (must be 16, 24, or 32 bytes)
+ * @param nonce Optional 12-byte initialization vector
+ *        NOTE: Only provide nonce for testing purposes. For security,
+ *        allow the function to generate a random nonce in production.
+ * @returns Combined nonce + ciphertext (first 12 bytes are the nonce)
+ */
 export async function encryptAESGCM(
-  message: string,
+  message: Uint8Array,
   key: Uint8Array,
   nonce?: Uint8Array
 ): Promise<Uint8Array> {
@@ -14,9 +24,6 @@ export async function encryptAESGCM(
   if (nonce && nonce.length !== 12) {
     throw new Error("Nonce must be 12 bytes");
   }
-
-  // Convert message to bytes
-  const msgBuffer = new TextEncoder().encode(message);
 
   // Generate random nonce if not provided
   if (!nonce) {
@@ -40,7 +47,7 @@ export async function encryptAESGCM(
       tagLength: 128,
     },
     cryptoKey,
-    msgBuffer
+    message
   );
 
   // Combine nonce and ciphertext
@@ -51,6 +58,14 @@ export async function encryptAESGCM(
   return result;
 }
 
+/**
+ * Decrypts data that was encrypted using encryptAESGCM.
+ *
+ * @param encrypted Combined nonce and ciphertext (as returned by encryptAESGCM)
+ * @param key The same key used for encryption
+ * @returns Decrypted data
+ * @throws Error if ciphertext is too short or decryption fails
+ */
 export async function decryptAESGCM(
   encrypted: Uint8Array,
   key: Uint8Array

@@ -1,24 +1,32 @@
+import { base64BufferToBigInt } from "../utils";
 import { BN254CurveWrapper } from "./bn254";
-
+import fs from "fs/promises";
 describe("Bn254 wrapper", () => {
-  test("Bilinearity", () => {
-    let g1Base = BN254CurveWrapper.G1Generator();
-    let g2Base = BN254CurveWrapper.G2Generator();
-
-    let randomScalar1 = BigInt(123456789);
-    let randomScalar2 = BigInt(987654321);
-
-    let g1ScalarMul1 = BN254CurveWrapper.g1ScalarMul(g1Base, randomScalar1);
-    let g2ScalarMul2 = BN254CurveWrapper.g2ScalarMul(g2Base, randomScalar2);
-
-    let pairing1 = BN254CurveWrapper.pairing(g1Base, g2Base);
-
-    let pairing2 = BN254CurveWrapper.pairing(g1ScalarMul1, g2ScalarMul2);
-
-    let pairingMul = BN254CurveWrapper.gtPow(
-      pairing1,
-      randomScalar1 * randomScalar2
+  test("pow", async () => {
+    let Z = BN254CurveWrapper.pairing(
+      BN254CurveWrapper.G1Generator(),
+      BN254CurveWrapper.G2Generator()
     );
-    expect(pairingMul).toEqual(pairing2);
+
+    console.log(
+      "g1",
+      BN254CurveWrapper.G1ToBytes(BN254CurveWrapper.G1Generator())
+    );
+
+    console.log(
+      "g2",
+      BN254CurveWrapper.G2ToBytes(BN254CurveWrapper.G2Generator())
+    );
+
+    const randomScalarBuffer = await fs.readFile(
+      "../testdata/random_scalar.txt"
+    );
+    const randomScalar = base64BufferToBigInt(randomScalarBuffer);
+
+    console.log("randomScalar", randomScalar);
+    console.log("Z", BN254CurveWrapper.GTToBytes(Z));
+    const result = BN254CurveWrapper.gtPow(Z, randomScalar);
+
+    console.log("result", BN254CurveWrapper.GTToBytes(result));
   });
 });

@@ -6,9 +6,15 @@ import (
 	"crypto/rand"
 	"fmt"
 	"io"
+
+	"github.com/tuantran-genetica/human-network-crypto-lib/pkg/pre/utils"
 )
 
-func EncryptAESGCM(message []byte, key []byte) ([]byte, error) {
+type AESGCMOptions struct {
+	Mock bool
+}
+
+func EncryptAESGCM(message []byte, key []byte, opts *AESGCMOptions) ([]byte, error) {
 	if len(key) != 16 && len(key) != 24 && len(key) != 32 {
 		return nil, fmt.Errorf("invalid key size: %d", len(key))
 	}
@@ -22,6 +28,10 @@ func EncryptAESGCM(message []byte, key []byte) ([]byte, error) {
 	nonce := make([]byte, 12)
 	if _, err = io.ReadFull(rand.Reader, nonce); err != nil {
 		return nil, fmt.Errorf("could not generate nonce: %v", err)
+	}
+
+	if opts != nil && opts.Mock {
+		nonce = utils.GenerateMockNonce()
 	}
 
 	// Create AEAD cipher

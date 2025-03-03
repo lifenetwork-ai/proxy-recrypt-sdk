@@ -48,12 +48,12 @@ export interface SecondLevelSymmetricKey {
   second: GTElement; // Second component in GT group
 }
 
-export interface FirstLevelCipherText {
+export interface FirstLevelEncryptionResponse {
   encryptedKey: FirstLevelSymmetricKey;
   encryptedMessage: Uint8Array;
 }
 
-export interface SecondLevelCipherText {
+export interface SecondLevelEncryptionResponse {
   encryptedKey: SecondLevelSymmetricKey;
   encryptedMessage: Uint8Array;
 }

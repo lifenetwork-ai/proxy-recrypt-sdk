@@ -106,7 +106,6 @@ func LoadKeyPairFromFile(filename string) (*types.KeyPair, error) {
 		return nil, fmt.Errorf("failed to deserialize G2 point: %v", err)
 	}
 
-	// Deserialize secret key
 	keyPair.SecretKey.First.SetString(serializable.SecretKey.First, 16)   // hex encoding
 	keyPair.SecretKey.Second.SetString(serializable.SecretKey.Second, 16) // hex encoding
 

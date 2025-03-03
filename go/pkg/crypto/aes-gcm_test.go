@@ -14,7 +14,7 @@ func TestAESGCM(t *testing.T) {
 	require.NoError(t, err)
 
 	message := []byte("hello, world")
-	ciphertext, err := crypto.EncryptAESGCM(message, key)
+	ciphertext, err := crypto.EncryptAESGCM(message, key, nil)
 
 	require.NoError(t, err)
 

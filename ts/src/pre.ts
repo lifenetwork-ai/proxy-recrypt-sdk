@@ -1,8 +1,8 @@
 import {
   SecretKey,
   PublicKey,
-  FirstLevelCipherText,
-  SecondLevelCipherText,
+  FirstLevelEncryptionResponse,
+  SecondLevelEncryptionResponse,
   SecondLevelSymmetricKey,
   FirstLevelSymmetricKey,
 } from "./types";
@@ -40,7 +40,7 @@ export class PreSchemeImpl {
     keyGT?: GTElement,
     key?: Uint8Array,
     nonce?: Uint8Array
-  ): Promise<SecondLevelCipherText> {
+  ): Promise<SecondLevelEncryptionResponse> {
     // Generate random symmetric key only if not provided
     if (!keyGT || !key) {
       const generatedKeys = generateRandomSymmetricKeyFromGT();
@@ -51,7 +51,11 @@ export class PreSchemeImpl {
     if (!nonce) {
       nonce = webcrypto.getRandomValues(new Uint8Array(12));
     }
-    const encryptedMessage = await encryptAESGCM(message, key, nonce);
+    const encryptedMessage = await encryptAESGCM(
+      Buffer.from(message),
+      key,
+      nonce
+    );
     const first = BN254CurveWrapper.g1ScalarMul(this.G1, scalar);
     const second = BN254CurveWrapper.gtMul(
       BN254CurveWrapper.gtPow(
@@ -70,16 +74,16 @@ export class PreSchemeImpl {
   }
 
   async decryptFirstLevel(
-    ciphertext: FirstLevelCipherText,
+    payload: FirstLevelEncryptionResponse,
     secretKey: SecretKey
   ): Promise<Uint8Array> {
     let symmetricKey = this.decryptFirstLevelKey(
-      ciphertext.encryptedKey,
+      payload.encryptedKey,
       secretKey
     );
 
     let decryptedMessage = await decryptAESGCM(
-      ciphertext.encryptedMessage,
+      payload.encryptedMessage,
       symmetricKey
     );
 
@@ -90,14 +94,47 @@ export class PreSchemeImpl {
     encryptedKey: FirstLevelSymmetricKey,
     secretKey: SecretKey
   ): Uint8Array {
-    const order = bn254.fields.Fp.ORDER;
+    const order = bn254.fields.Fr.ORDER;
+
+    // console.log("scalar", bigintModArith.modInv(secretKey.second, order));
+    // console.log(
+    //   "Encrypted key first",
+    //   BN254CurveWrapper.GTToBytes(encryptedKey.first)
+    // );
+    // console.log("bob secret key", secretKey.second);
+    // console.log("order", order);
     const temp = BN254CurveWrapper.gtPow(
       encryptedKey.first,
       bigintModArith.modInv(secretKey.second, order)
     );
-
+    // console.log("temp", BN254CurveWrapper.GTToBytes(temp));
     const symmetricKeyGT = BN254CurveWrapper.gtDiv(encryptedKey.second, temp);
+    const symmetricKey = deriveKeyFromGT(symmetricKeyGT);
 
+    return symmetricKey;
+  }
+
+  async decryptSecondLevel(
+    encryptedKey: SecondLevelSymmetricKey,
+    encryptedMessage: Uint8Array,
+    secretKey: SecretKey
+  ): Promise<Uint8Array> {
+    let symmetricKey = this.decryptSecondLevelKey(encryptedKey, secretKey);
+
+    let decryptedMessage = await decryptAESGCM(encryptedMessage, symmetricKey);
+
+    return decryptedMessage;
+  }
+
+  decryptSecondLevelKey(
+    encryptedKey: SecondLevelSymmetricKey,
+    secretKey: SecretKey
+  ): Uint8Array {
+    const temp = BN254CurveWrapper.pairing(encryptedKey.first, this.G2);
+    const symmetricKeyGT = BN254CurveWrapper.gtDiv(
+      encryptedKey.second,
+      BN254CurveWrapper.gtPow(temp, secretKey.first)
+    );
     const symmetricKey = deriveKeyFromGT(symmetricKeyGT);
 
     return symmetricKey;
