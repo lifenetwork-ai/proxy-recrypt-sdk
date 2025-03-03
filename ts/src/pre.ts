@@ -19,9 +19,9 @@ import * as bigintModArith from "bigint-mod-arith";
 import { webcrypto } from "crypto";
 
 export class PreSchemeImpl {
-  private G1: G1Point;
-  private G2: G2Point;
-  private Z: GTElement;
+  G1: G1Point;
+  G2: G2Point;
+  Z: GTElement;
 
   constructor() {
     this.G1 = BN254CurveWrapper.G1Generator();

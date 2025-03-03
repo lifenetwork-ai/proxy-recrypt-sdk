@@ -1,5 +1,5 @@
-import { BN254CurveWrapper, G2Point, GTElement } from "./crypto";
-import { KeyPair, PublicKey, SecretKey } from "./types";
+import { BN254CurveWrapper, G2Point, GTElement } from "../crypto";
+import { KeyPair, PublicKey, SecretKey } from "../types";
 import { Fp, Fp12, Fp6, Fp2 } from "@noble/curves/abstract/tower";
 export function secretToPubkey(
   secret: SecretKey,
@@ -14,7 +14,6 @@ export function secretToPubkey(
 
 import fs from "fs/promises";
 import { Buffer } from "buffer";
-import { bn254 } from "@noble/curves/bn254";
 import { IField } from "@noble/curves/abstract/modular";
 // Interface for JSON serialization/deserialization
 interface SerializableKeyPair {

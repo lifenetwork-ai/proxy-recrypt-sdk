@@ -1,27 +1,6 @@
 import { ProjPointType } from "@noble/curves/abstract/weierstrass";
 import { G1Point, G2Point, GTElement } from "./crypto/bn254";
 
-// export interface PreScheme {
-//   // Core PRE operations
-//   generateReEncryptionKey(secretA: bigint, publicB: G2Point): G2Point;
-//   secondLevelEncryption(
-//     pubkeyA: GTElement,
-//     secretB: bigint,
-//     message: string,
-//     scalar: bigint
-//   ): SecondLevelCipherText;
-//   reEncryption(
-//     ciphertext: SecondLevelCipherText,
-//     reKey: Point,
-//     pubKeyB: Point
-//   ): FirstLevelCipherText;
-//   secretToPubkey(secret: SecretKey): PublicKey;
-//   decryptFirstLevel(
-//     ciphertext: FirstLevelCipherText,
-//     secretKey: SecretKey
-//   ): string;
-// }
-
 export interface KeyPair {
   secretKey: SecretKey;
   publicKey: PublicKey;
