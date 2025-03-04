@@ -49,19 +49,16 @@ func TestMockPreFullFlow(t *testing.T) {
 	// Generate re-encryption key for Alice->Bob
 	reKey := scheme.GenerateReEncryptionKey(keyPairAlice.SecretKey, keyPairBob.PublicKey)
 	reKeyBytes := reKey.RawBytes()
-
 	require.Equal(t, reKeyBytes, scheme.(*mocks.MockPreScheme).ReKey.RawBytes())
 
 	encryptedKey, encryptedMessage, err := scheme.SecondLevelEncryption(keyPairAlice.SecretKey, string(scheme.(*mocks.MockPreScheme).Message), scheme.(*mocks.MockPreScheme).Scalar)
-
 	require.NoError(t, err)
 
+	// Persist the encrypted key
 	SecondLevelEncryptedKeyFirstBytes := encryptedKey.First.RawBytes()
 	SecondLevelEncryptedKeySecondBytes := encryptedKey.Second.Bytes()
-
 	err = utils.WriteAsBase64IfNotExists("../../../testdata/second_encrypted_key_first.txt", SecondLevelEncryptedKeyFirstBytes[:])
 	require.NoError(t, err)
-
 	err = utils.WriteAsBase64IfNotExists("../../../testdata/second_encrypted_key_second.txt", SecondLevelEncryptedKeySecondBytes[:])
 	require.NoError(t, err)
 
@@ -70,6 +67,8 @@ func TestMockPreFullFlow(t *testing.T) {
 	firstLevelEncryptedKey := scheme.ReEncryption(encryptedKey, reKey)
 	firstLevelEncryptedKeyFirstBytes := firstLevelEncryptedKey.First.Bytes()
 	firstLevelEncryptedKeySecondBytes := firstLevelEncryptedKey.Second.Bytes()
+
+	// Persist the re-encrypted key
 	err = utils.WriteAsBase64IfNotExists("../../../testdata/first_encrypted_key_first.txt", firstLevelEncryptedKeyFirstBytes[:])
 	require.NoError(t, err)
 	err = utils.WriteAsBase64IfNotExists("../../../testdata/first_encrypted_key_second.txt", firstLevelEncryptedKeySecondBytes[:])

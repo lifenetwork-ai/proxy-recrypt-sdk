@@ -61,7 +61,6 @@ func Exp(x E12, k *big.Int) *E12 {
 }
 
 func initFirst() *bn254.E12 {
-
 	// First, create the E2 elements for the first E6 component (c0)
 	c0_c0 := new(bn254.E2)
 	c0_c0.A0.SetString("14841886482450590275284665479453326838835013692642419664128295955689030577864")

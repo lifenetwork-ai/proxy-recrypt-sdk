@@ -1,4 +1,4 @@
-package mocks
+package testutils
 
 import (
 	"encoding/base64"
@@ -110,4 +110,36 @@ func LoadKeyPairFromFile(filename string) (*types.KeyPair, error) {
 	keyPair.SecretKey.Second.SetString(serializable.SecretKey.Second, 16) // hex encoding
 
 	return keyPair, nil
+}
+
+func LoadAliceKeyPair() *types.KeyPair {
+	aliceKeypair, err := LoadKeyPairFromFile("../../../testdata/alice_keypair.json")
+	if err != nil {
+		err = SaveKeyPairToFile("../../../testdata/alice_keypair.json")
+		if err != nil {
+			panic(err)
+		}
+		aliceKeypair, err = LoadKeyPairFromFile("../../../testdata/alice_keypair.json")
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	return aliceKeypair
+}
+
+func LoadBobKeyPair() *types.KeyPair {
+	bobKeypair, err := LoadKeyPairFromFile("../../../testdata/bob_keypair.json")
+	if err != nil {
+		err = SaveKeyPairToFile("../../../testdata/bob_keypair.json")
+		if err != nil {
+			panic(err)
+		}
+		bobKeypair, err = LoadKeyPairFromFile("../../../testdata/bob_keypair.json")
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	return bobKeypair
 }
