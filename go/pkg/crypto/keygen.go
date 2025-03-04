@@ -1,12 +1,10 @@
 package crypto
 
 import (
-	"crypto/sha256"
 	"fmt"
-	"io"
 
 	"github.com/consensys/gnark-crypto/ecc/bn254"
-	"golang.org/x/crypto/hkdf"
+	"github.com/tuantran-genetica/human-network-crypto-lib/pkg/pre/utils"
 )
 
 // GenerateRandomSymmetricKeyFromGT creates a new symmetric key of specified size (16, 24, or 32 bytes)
@@ -33,49 +31,10 @@ func GenerateRandomSymmetricKeyFromGT(keySize int) (*bn254.GT, []byte, error) {
 	}
 
 	// Derive key from a point in GT
-	symmetricKey, err := DeriveKeyFromGT(randomGT, keySize)
+	symmetricKey, err := utils.DeriveKeyFromGT(randomGT, keySize)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to derive key: %v", err)
 	}
 
 	return randomGT, symmetricKey, nil
-}
-
-// DeriveKeyFromGT derives a symmetric key of specified size (16, 24, or 32 bytes) from a bn254.GT element.
-// The function returns the derived symmetric key or an error if derivation fails.
-func DeriveKeyFromGT(gtElement *bn254.GT, keySize int) ([]byte, error) {
-	// Validate inputs
-	if gtElement == nil {
-		return nil, fmt.Errorf("GT element is nil")
-	}
-	if keySize != 16 && keySize != 24 && keySize != 32 {
-		return nil, fmt.Errorf("invalid key size: must be 16, 24, or 32 bytes")
-	}
-
-	// Get bytes from GT element
-	gtBytes := gtElement.Bytes()
-	if len(gtBytes) == 0 {
-		return nil, fmt.Errorf("failed to get bytes from GT element")
-	}
-
-	salt := []byte("PRE_derive_key")
-
-	// Use HKDF to derive the key
-	hkdf := hkdf.New(sha256.New,
-		gtBytes[:],                  // Input keying material
-		salt,                        // Salt (optional)
-		[]byte("PRE_symmetric_key"), // Info (context)
-	)
-
-	// Extract the key
-	symmetricKey := make([]byte, keySize)
-	if _, err := io.ReadFull(hkdf, symmetricKey); err != nil {
-		return nil, fmt.Errorf("failed to derive key: %v", err)
-	}
-
-	if len(symmetricKey) != keySize {
-		return nil, fmt.Errorf("derived key is not the expected size")
-	}
-
-	return symmetricKey, nil
 }

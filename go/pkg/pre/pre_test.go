@@ -10,6 +10,7 @@ import (
 	"github.com/tuantran-genetica/human-network-crypto-lib/pkg/pre/mocks"
 	"github.com/tuantran-genetica/human-network-crypto-lib/pkg/pre/types"
 	"github.com/tuantran-genetica/human-network-crypto-lib/pkg/pre/utils"
+	"github.com/tuantran-genetica/human-network-crypto-lib/pkg/testutils"
 )
 
 func TestPreFullFlow(t *testing.T) {
@@ -17,15 +18,15 @@ func TestPreFullFlow(t *testing.T) {
 	scheme := pre.NewPreScheme()
 	// Test setup
 	// Generate key pair for Alice and Bob
-	keyPairAlice := utils.GenerateRandomKeyPair(scheme.G2(), scheme.Z())
-	keyPairBob := utils.GenerateRandomKeyPair(scheme.G2(), scheme.Z())
+	keyPairAlice := testutils.GenerateRandomKeyPair(scheme.G2(), scheme.Z())
+	keyPairBob := testutils.GenerateRandomKeyPair(scheme.G2(), scheme.Z())
 
 	// Alice side
 	// Generate re-encryption key for Alice->Bob
 	reKey := scheme.GenerateReEncryptionKey(keyPairAlice.SecretKey, keyPairBob.PublicKey)
 	// Alice encrypt a message
 	message := "Life is full of unexpected moments that shape who we become. Each day brings new opportunities to learn, grow, and discover something amazing about ourselves and the world around us. When we embrace these challenges with an open mind and willing heart, we find strength we never knew we had. Remember that every step forward, no matter how small, is progress toward your dreams today."
-	encryptedKey, encryptedMessage, err := scheme.SecondLevelEncryption(keyPairAlice.SecretKey, message, utils.GenerateRandomScalar())
+	encryptedKey, encryptedMessage, err := scheme.SecondLevelEncryption(keyPairAlice.SecretKey, message, testutils.GenerateRandomScalar())
 	require.NoError(t, err)
 
 	// Proxy side
@@ -58,9 +59,9 @@ func TestMockPreFullFlow(t *testing.T) {
 	// Persist the encrypted key
 	SecondLevelEncryptedKeyFirstBytes := encryptedKey.First.RawBytes()
 	SecondLevelEncryptedKeySecondBytes := encryptedKey.Second.Bytes()
-	err = utils.WriteAsBase64IfNotExists("../../../testdata/second_encrypted_key_first.txt", SecondLevelEncryptedKeyFirstBytes[:])
+	err = testutils.WriteAsBase64IfNotExists("../../../testdata/second_encrypted_key_first.txt", SecondLevelEncryptedKeyFirstBytes[:])
 	require.NoError(t, err)
-	err = utils.WriteAsBase64IfNotExists("../../../testdata/second_encrypted_key_second.txt", SecondLevelEncryptedKeySecondBytes[:])
+	err = testutils.WriteAsBase64IfNotExists("../../../testdata/second_encrypted_key_second.txt", SecondLevelEncryptedKeySecondBytes[:])
 	require.NoError(t, err)
 
 	// Proxy side
@@ -70,9 +71,9 @@ func TestMockPreFullFlow(t *testing.T) {
 	firstLevelEncryptedKeySecondBytes := firstLevelEncryptedKey.Second.Bytes()
 
 	// Persist the re-encrypted key
-	err = utils.WriteAsBase64IfNotExists("../../../testdata/first_encrypted_key_first.txt", firstLevelEncryptedKeyFirstBytes[:])
+	err = testutils.WriteAsBase64IfNotExists("../../../testdata/first_encrypted_key_first.txt", firstLevelEncryptedKeyFirstBytes[:])
 	require.NoError(t, err)
-	err = utils.WriteAsBase64IfNotExists("../../../testdata/first_encrypted_key_second.txt", firstLevelEncryptedKeySecondBytes[:])
+	err = testutils.WriteAsBase64IfNotExists("../../../testdata/first_encrypted_key_second.txt", firstLevelEncryptedKeySecondBytes[:])
 	require.NoError(t, err)
 
 	// Bob side
@@ -88,8 +89,8 @@ func TestMockPreFullFlow(t *testing.T) {
 
 func BenchmarkReEncryption(b *testing.B) {
 	scheme := pre.NewPreScheme()
-	cipherText := utils.GenerateMockSecondLevelCipherText(500)
-	reKey := utils.GenerateRandomG2Elem()
+	cipherText := testutils.GenerateMockSecondLevelCipherText(500)
+	reKey := testutils.GenerateRandomG2Elem()
 	for n := 0; n < b.N; n++ {
 		scheme.ReEncryption(cipherText, reKey)
 	}
@@ -99,8 +100,8 @@ func TestGenerateKeyPair(t *testing.T) {
 	scheme := pre.NewPreScheme()
 
 	sk := &types.SecretKey{
-		First:  utils.GenerateRandomScalar(),
-		Second: utils.GenerateRandomScalar(),
+		First:  testutils.GenerateRandomScalar(),
+		Second: testutils.GenerateRandomScalar(),
 	}
 
 	pk := utils.SecretToPubkey(sk, scheme.G2(), scheme.Z())

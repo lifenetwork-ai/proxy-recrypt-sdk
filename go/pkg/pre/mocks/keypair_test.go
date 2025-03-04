@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"github.com/tuantran-genetica/human-network-crypto-lib/pkg/pre/testutils"
+	"github.com/tuantran-genetica/human-network-crypto-lib/pkg/testutils"
 )
 
 func TestSerializeDeserializeKeyPair(t *testing.T) {

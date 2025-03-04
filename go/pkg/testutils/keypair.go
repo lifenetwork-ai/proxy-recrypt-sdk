@@ -30,7 +30,7 @@ func SaveKeyPairToFile(filename string) error {
 	_, g2, Z := utils.GenerateSystemParameters()
 
 	// Generate a new keypair
-	keyPair := utils.GenerateRandomKeyPair(&g2, &Z)
+	keyPair := GenerateRandomKeyPair(&g2, &Z)
 
 	// Convert to serializable format
 	serializable := SerializableKeyPair{}

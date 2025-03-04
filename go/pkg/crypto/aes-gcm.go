@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/tuantran-genetica/human-network-crypto-lib/pkg/pre/utils"
+	"github.com/tuantran-genetica/human-network-crypto-lib/pkg/testutils"
 )
 
 type AESGCMOptions struct {
@@ -31,7 +31,7 @@ func EncryptAESGCM(message []byte, key []byte, opts *AESGCMOptions) ([]byte, err
 	}
 
 	if opts != nil && opts.Mock {
-		nonce = utils.GenerateMockNonce()
+		nonce = testutils.GenerateMockNonce()
 	}
 
 	// Create AEAD cipher

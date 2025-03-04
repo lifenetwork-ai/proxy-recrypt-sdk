@@ -6,7 +6,6 @@ import (
 	"os"
 
 	"github.com/consensys/gnark-crypto/ecc/bn254"
-	"github.com/tuantran-genetica/human-network-crypto-lib/pkg/crypto"
 	"github.com/tuantran-genetica/human-network-crypto-lib/pkg/pre/types"
 	"github.com/tuantran-genetica/human-network-crypto-lib/pkg/pre/utils"
 )
@@ -17,7 +16,7 @@ func LoadReKey(aliceKeypair, bobKeypair *types.KeyPair, scheme types.PreScheme) 
 	if err != nil {
 		reKey := scheme.GenerateReEncryptionKey(aliceKeypair.SecretKey, bobKeypair.PublicKey)
 		reKeyRawBytes := reKey.RawBytes()
-		err = utils.WriteAsBase64IfNotExists("../../../testdata/rekey.txt", reKeyRawBytes[:])
+		err = WriteAsBase64IfNotExists("../../../testdata/rekey.txt", reKeyRawBytes[:])
 		if err != nil {
 			panic(err)
 		}
@@ -41,9 +40,9 @@ func LoadReKey(aliceKeypair, bobKeypair *types.KeyPair, scheme types.PreScheme) 
 func LoadMockScalar() (*big.Int, error) {
 	mockData, err := os.ReadFile("../../../testdata/random_scalar.txt")
 	if err != nil {
-		randomScalar := utils.GenerateRandomScalar()
+		randomScalar := GenerateRandomScalar()
 		randomScalarBytes := randomScalar.Bytes()
-		err = utils.WriteAsBase64IfNotExists("../../../testdata/random_scalar.txt", randomScalarBytes)
+		err = WriteAsBase64IfNotExists("../../../testdata/random_scalar.txt", randomScalarBytes)
 		if err != nil {
 			return nil, err
 		}
@@ -60,9 +59,9 @@ func LoadMockSymmetricKeyGt() *bn254.GT {
 	symmetricKeyGtContent, err := os.ReadFile("../../../testdata/symmetric_key_gt.txt")
 	var symmetricKeyGtBytes []byte
 	if err != nil {
-		randomGt := utils.GenerateRandomGTElem()
+		randomGt := GenerateRandomGTElem()
 		randomGtBytes := randomGt.Bytes()
-		err = utils.WriteAsBase64IfNotExists("../../../testdata/symmetric_key_gt.txt", randomGtBytes[:])
+		err = WriteAsBase64IfNotExists("../../../testdata/symmetric_key_gt.txt", randomGtBytes[:])
 		if err != nil {
 			panic(err)
 		}
@@ -85,7 +84,7 @@ func LoadMockSymmetricKeyGt() *bn254.GT {
 
 func LoadMockSymmetricKey() []byte {
 	symmetricKeyGt := LoadMockSymmetricKeyGt()
-	key, _ := crypto.DeriveKeyFromGT(symmetricKeyGt, 32)
+	key, _ := utils.DeriveKeyFromGT(symmetricKeyGt, 32)
 
 	return key
 }
