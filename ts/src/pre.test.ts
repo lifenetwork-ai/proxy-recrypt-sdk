@@ -106,3 +106,44 @@ describe("PRE", () => {
     expect(Buffer.compare(resp, testData.message)).toBe(0);
   });
 });
+
+describe("PreSchemeImpl", () => {
+  let scheme: PreSchemeImpl;
+
+  beforeEach(() => {
+    scheme = new PreSchemeImpl();
+  });
+
+  test("constructor initializes curve parameters correctly", () => {
+    expect(scheme.G1).toBeDefined();
+    expect(scheme.G2).toBeDefined();
+    expect(scheme.Z).toBeDefined();
+    
+    // Verify Z = e(G1,G2)
+    const computedZ = BN254CurveWrapper.pairing(scheme.G1, scheme.G2);
+    expect(scheme.Z).toEqual(computedZ);
+  });
+
+  test("decryptFirstLevel should throw on invalid input", async () => {
+    await expect(
+      scheme.decryptFirstLevel(
+        { encryptedKey: {
+          first: BN254CurveWrapper.GTBase(),
+          second: BN254CurveWrapper.GTBase(),
+        }, encryptedMessage: new Uint8Array() },
+        { first: 0n, second: 0n }
+      )
+    ).rejects.toThrow();
+  });
+
+  test("secondLevelEncryption should throw on invalid scalar", async () => {
+    const invalidScalar = 2n ** 256n; // Too large
+    await expect(
+      scheme.secondLevelEncryption(
+        { first: 0n, second: 0n },
+        "test",
+        invalidScalar
+      )
+    ).rejects.toThrow();
+  });
+});

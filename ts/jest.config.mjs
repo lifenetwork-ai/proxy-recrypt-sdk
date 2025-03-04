@@ -18,6 +18,13 @@ export default {
   coverageReporters: [
     "text",
     "cobertura"
+  ],
+  coveragePathIgnorePatterns: [
+    "/node_modules/",
+    "/dist/",
+    "/mocks/",
+    "index.ts",
+    "types.ts"
   ]
 
 }

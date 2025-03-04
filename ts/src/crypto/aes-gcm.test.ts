@@ -27,3 +27,24 @@ describe("Test AES-GCM", () => {
     expect(Buffer.compare(encrypted, expectedEncrypted)).toBe(0);
   });
 });
+
+describe("AES-GCM edge cases", () => {
+  test("should throw on invalid key size", async () => {
+    const message = Buffer.from("test");
+    const invalidKey = new Uint8Array(20); // Invalid size
+    await expect(encryptAESGCM(message, invalidKey)).rejects.toThrow("Invalid key size");
+  });
+
+  test("should throw on invalid nonce size", async () => {
+    const message = Buffer.from("test");
+    const key = new Uint8Array(32);
+    const invalidNonce = new Uint8Array(16); // Should be 12
+    await expect(encryptAESGCM(message, key, invalidNonce)).rejects.toThrow("Nonce must be 12 bytes");
+  });
+
+  test("should throw on decryption with invalid data", async () => {
+    const key = new Uint8Array(32);
+    const invalidData = new Uint8Array(10); // Too short
+    await expect(decryptAESGCM(invalidData, key)).rejects.toThrow();
+  });
+});

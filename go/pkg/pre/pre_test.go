@@ -1,6 +1,7 @@
 package pre_test
 
 import (
+	"math/big"
 	"testing"
 
 	"github.com/consensys/gnark-crypto/ecc/bn254"
@@ -108,4 +109,22 @@ func TestGenerateKeyPair(t *testing.T) {
 
 	require.Equal(t, pk.First, new(bn254.GT).Exp(*scheme.Z(), sk.First))
 	require.Equal(t, pk.Second, new(bn254.G2Affine).ScalarMultiplication(scheme.G2(), sk.Second))
+}
+
+func TestPreSchemeErrors(t *testing.T) {
+	scheme := pre.NewPreScheme()
+
+	t.Run("SecondLevelEncryption with invalid scalar", func(t *testing.T) {
+		// Use scalar larger than curve order
+		invalidScalar := new(big.Int).Add(bn254.ID.ScalarField(), big.NewInt(1))
+		_, _, err := scheme.SecondLevelEncryption(nil, "test", invalidScalar)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "scalar is out of range")
+	})
+
+	t.Run("DecryptFirstLevel with nil inputs", func(t *testing.T) {
+		require.Panics(t, func() {
+			scheme.DecryptFirstLevel(nil, nil, nil)
+		})
+	})
 }
