@@ -1,7 +1,6 @@
 package pre_test
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/consensys/gnark-crypto/ecc/bn254"
