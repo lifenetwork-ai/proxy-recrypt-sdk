@@ -57,7 +57,6 @@ func LoadMockScalar() (*big.Int, error) {
 }
 
 func LoadMockSymmetricKeyGt() *bn254.GT {
-
 	symmetricKeyGtContent, err := os.ReadFile("../../../testdata/symmetric_key_gt.txt")
 	var symmetricKeyGtBytes []byte
 	if err != nil {
