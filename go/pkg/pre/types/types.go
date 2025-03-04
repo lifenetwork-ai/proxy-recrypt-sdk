@@ -81,23 +81,34 @@ using proxy re-encryption. This is useful when:
 // 4. A's secret key remains secure even if proxy and B collude
 // 5. Re-encryption key is specific to A->B relationship
 
-// PreScheme defines the interface for proxy re-encryption operations
+// PreScheme defines the interface for a proxy re-encryption scheme
 type PreScheme interface {
-	// GenerateReEncryptionKey generates a re-encryption key for A->B delegation
+	// GenerateReEncryptionKey creates a re-encryption key for A->B transformation
+	// Takes a portion of secret key from A and a portion of public key from B
+	// Returns a point in the G2 group
 	GenerateReEncryptionKey(secretA *SecretKey, publicB *PublicKey) *bn254.G2Affine
 
-	// SecondLevelEncryption encrypts a message that can be decrypted by A and delegatees
-	SecondLevelEncryption(secretA *SecretKey, message string, scalar *big.Int) *SecondLevelCipherText
+	// SecondLevelEncryption encrypts a message m under a public key
+	// Returns the encrypted symmetric key and the encrypted message
+	SecondLevelEncryption(secretA *SecretKey, message string, scalar *big.Int) (*SecondLevelSymmetricKey, []byte, error)
 
-	// ReEncryption re-encrypts a second-level ciphertext to a first-level ciphertext
-	ReEncryption(ciphertext *SecondLevelCipherText, reKey *bn254.G2Affine) *FirstLevelCipherText
+	// ReEncryption transforms a second-level ciphertext to a first-level one
+	// Takes a second-level encrypted key and a re-encryption key
+	// Returns a first-level encrypted key
+	ReEncryption(encryptedKey *SecondLevelSymmetricKey, reKey *bn254.G2Affine) *FirstLevelSymmetricKey
 
-	// SecretToPubkey converts a secret key to its corresponding public key
+	// SecretToPubkey derives a public key from a secret key
 	SecretToPubkey(secret *SecretKey) *PublicKey
 
-	// DecryptFirstLevel decrypts a first-level ciphertext using the secret key
-	DecryptFirstLevel(ciphertext *FirstLevelCipherText, secretKey *SecretKey) string
+	// DecryptFirstLevel decrypts message using a first-level encrypted key
+	// Takes an encrypted key, encrypted message, and a secret key
+	// Returns the decrypted message as a string
+	DecryptFirstLevel(encryptedKey *FirstLevelSymmetricKey, encryptedMessage []byte, secretKey *SecretKey) string
 
+	// DecryptSecondLevel decrypts message using a second-level encrypted key
+	// Takes an encrypted key, encrypted message, and a secret key
+	// Returns the decrypted message as a string
+	DecryptSecondLevel(encryptedKey *SecondLevelSymmetricKey, encryptedMessage []byte, secretKey *SecretKey) string
 	IGet
 }
 

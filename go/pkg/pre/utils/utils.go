@@ -79,14 +79,15 @@ func GenerateRandomG2Elem() *bn254.G2Affine {
 	return elem
 }
 
-func GenerateMockSecondLevelCipherText(length int) *types.SecondLevelCipherText {
-	return &types.SecondLevelCipherText{
-		EncryptedKey: &types.SecondLevelSymmetricKey{
-			First:  GenerateRandomG1Elem(),
-			Second: GenerateRandomGTElem(),
-		},
-		EncryptedMessage: []byte(GenerateRandomString(length)),
+func GenerateMockSecondLevelCipherText(_ int) *types.SecondLevelSymmetricKey {
+	return &types.SecondLevelSymmetricKey{
+		First:  GenerateRandomG1Elem(),
+		Second: GenerateRandomGTElem(),
 	}
+}
+
+func GenerateMockNonce() []byte {
+	return []byte{223, 226, 69, 90, 252, 126, 59, 176, 98, 14, 194, 123}
 }
 
 // GenerateRandomString creates a cryptographically secure random string of fixed length

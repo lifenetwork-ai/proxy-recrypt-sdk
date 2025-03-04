@@ -1,10 +1,11 @@
-package mocks
+package mocks_test
 
 import (
 	"os"
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"github.com/tuantran-genetica/human-network-crypto-lib/pkg/pre/testutils"
 )
 
 func TestSerializeDeserializeKeyPair(t *testing.T) {
@@ -14,11 +15,11 @@ func TestSerializeDeserializeKeyPair(t *testing.T) {
 	defer os.Remove(tmpFile.Name()) // Clean up after test
 
 	// Save a keypair to the file
-	err = SaveKeyPairToFile(tmpFile.Name())
+	err = testutils.SaveKeyPairToFile(tmpFile.Name())
 	require.NoError(t, err)
 
 	// Load the keypair from the file
-	loadedKeyPair, err := LoadKeyPairFromFile(tmpFile.Name())
+	loadedKeyPair, err := testutils.LoadKeyPairFromFile(tmpFile.Name())
 	require.NoError(t, err)
 
 	// Verify that the loaded keypair is valid

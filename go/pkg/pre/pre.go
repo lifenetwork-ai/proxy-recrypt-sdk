@@ -41,23 +41,23 @@ func (p *preScheme) GenerateReEncryptionKey(secretA *types.SecretKey, publicB *t
 // It takes the public key of A, a portion of secret key of B, the message m and a random scalar as input.
 // The scalar is used to randomize the encryption, should not be reused in other sessions.
 // It returns the ciphertext in the form of a pair of points in G1 and GT groups.
-func (p *preScheme) SecondLevelEncryption(secretA *types.SecretKey, message string, scalar *big.Int) *types.SecondLevelCipherText {
+func (p *preScheme) SecondLevelEncryption(secretA *types.SecretKey, message string, scalar *big.Int) (*types.SecondLevelSymmetricKey, []byte, error) {
 	// check if scalar is in the correct range
 	if scalar.Cmp(bn254.ID.ScalarField()) >= 0 {
-		panic("scalar is out of range")
+		return nil, nil, fmt.Errorf("scalar is out of range")
 	}
 
 	// generate random symmetric key
 	keyGT, key, err := crypto.GenerateRandomSymmetricKeyFromGT(32)
 	if err != nil {
-		panic("error in key generation:" + err.Error())
+		return nil, nil, fmt.Errorf("failed to generate random key: %v", err)
 	}
 
 	// encrypt the message
-	encryptedMessage, err := crypto.EncryptAESGCM([]byte(message), key)
+	encryptedMessage, err := crypto.EncryptAESGCM([]byte(message), key, nil)
 
 	if err != nil {
-		panic("error in encryption:" + err.Error())
+		return nil, nil, fmt.Errorf("failed to encrypt message: %v", err)
 	}
 
 	// g1^k
@@ -72,32 +72,27 @@ func (p *preScheme) SecondLevelEncryption(secretA *types.SecretKey, message stri
 		First:  first,
 		Second: second,
 	}
-	return &types.SecondLevelCipherText{
-		EncryptedKey:     encryptedKey,
-		EncryptedMessage: encryptedMessage,
-	}
+
+	return encryptedKey, encryptedMessage, nil
 }
 
 // ReEncryption performs the re-encryption operation for the PRE scheme.
 // It re-encrypts the ciphertext under the re-encryption key.
 // It takes the second-level ciphertext and the re-encryption key as input.
 // It returns the re-encrypted(first-level) ciphertext.
-func (p *preScheme) ReEncryption(ciphertext *types.SecondLevelCipherText, reKey *bn254.G2Affine) *types.FirstLevelCipherText {
+func (p *preScheme) ReEncryption(encryptedKey *types.SecondLevelSymmetricKey, reKey *bn254.G2Affine) *types.FirstLevelSymmetricKey {
 	// compute the re-encryption of the key
-	first, err := bn254.Pair([]bn254.G1Affine{*ciphertext.EncryptedKey.First}, []bn254.G2Affine{*reKey})
+	first, err := bn254.Pair([]bn254.G1Affine{*encryptedKey.First}, []bn254.G2Affine{*reKey})
 	if err != nil {
 		panic("error in re-encryption")
 	}
 
 	newEncryptedKey := &types.FirstLevelSymmetricKey{
 		First:  &first,
-		Second: ciphertext.EncryptedKey.Second,
+		Second: encryptedKey.Second,
 	}
 
-	return &types.FirstLevelCipherText{
-		EncryptedKey:     newEncryptedKey,
-		EncryptedMessage: ciphertext.EncryptedMessage,
-	}
+	return newEncryptedKey
 }
 
 // Convert the secret key to public key in the PRE scheme.
@@ -105,14 +100,25 @@ func (p *preScheme) SecretToPubkey(secret *types.SecretKey) *types.PublicKey {
 	return utils.SecretToPubkey(secret, p.g2, p.z)
 }
 
-// Decrypt first-level ciphertext
-func (p *preScheme) DecryptFirstLevel(ciphertext *types.FirstLevelCipherText, secretKey *types.SecretKey) string {
-	symmetricKey, err := p.decryptFirstLevelKey(ciphertext.EncryptedKey, secretKey)
+// Decrypt with first-level encrypted key
+func (p *preScheme) DecryptFirstLevel(encryptedKey *types.FirstLevelSymmetricKey, encryptedMessage []byte, secretKey *types.SecretKey) string {
+	symmetricKey, err := p.decryptFirstLevelKey(encryptedKey, secretKey)
 	if err != nil {
 		panic("error in deriving key")
 	}
 
-	decryptedMessage, _ := crypto.DecryptAESGCM(ciphertext.EncryptedMessage, symmetricKey)
+	decryptedMessage, _ := crypto.DecryptAESGCM(encryptedMessage, symmetricKey)
+	return string(decryptedMessage)
+}
+
+// Decrypt with second-level encrypted key
+func (p *preScheme) DecryptSecondLevel(encryptedKey *types.SecondLevelSymmetricKey, encryptedMessage []byte, secretKey *types.SecretKey) string {
+	symmetricKey, err := p.decryptSecondLevelKey(encryptedKey, secretKey)
+	if err != nil {
+		panic("error in deriving key")
+	}
+
+	decryptedMessage, _ := crypto.DecryptAESGCM(encryptedMessage, symmetricKey)
 	return string(decryptedMessage)
 }
 
@@ -123,6 +129,24 @@ func (p *preScheme) decryptFirstLevelKey(encryptedKey *types.FirstLevelSymmetric
 
 	symmetricKeyGT := new(bn254.GT).Div(encryptedKey.Second, temp)
 
+	symmetricKey, err := crypto.DeriveKeyFromGT(symmetricKeyGT, 32)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to derive key: %v", err)
+	}
+
+	return symmetricKey, nil
+}
+
+// Decrypt second-level encrypted symmetric key
+// Supposed to run by the original encryptor
+func (p *preScheme) decryptSecondLevelKey(encryptedKey *types.SecondLevelSymmetricKey, secretKey *types.SecretKey) ([]byte, error) {
+	temp, err := bn254.Pair([]bn254.G1Affine{*encryptedKey.First}, []bn254.G2Affine{*p.g2})
+	if err != nil {
+		return nil, fmt.Errorf("error in pairing")
+	}
+
+	symmetricKeyGT := new(bn254.GT).Div(encryptedKey.Second, new(bn254.GT).Exp(temp, secretKey.First))
 	symmetricKey, err := crypto.DeriveKeyFromGT(symmetricKeyGT, 32)
 
 	if err != nil {
