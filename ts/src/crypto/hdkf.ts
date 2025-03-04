@@ -21,10 +21,6 @@ export function deriveKeyFromGT(
     keySize: number = DEFAULT_KEY_SIZE
 ): Uint8Array {
     // Validate inputs
-    if (!gtElement) {
-        throw new Error("GT element is null or undefined");
-    }
-
     if (![16, 24, 32].includes(keySize)) {
         throw new Error("Invalid key size: must be 16, 24, or 32 bytes");
     }
