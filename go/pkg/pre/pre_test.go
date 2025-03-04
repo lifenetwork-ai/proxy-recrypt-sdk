@@ -129,3 +129,29 @@ func TestPreSchemeErrors(t *testing.T) {
 		})
 	})
 }
+
+func TestPreSchemeAdditional(t *testing.T) {
+	scheme := pre.NewPreScheme()
+
+	t.Run("DecryptSecondLevel with invalid inputs", func(t *testing.T) {
+		message := "test message"
+		keyPair := testutils.GenerateRandomKeyPair(scheme.G2(), scheme.Z())
+		encryptedKey, encryptedMessage, err := scheme.SecondLevelEncryption(
+			keyPair.SecretKey,
+			message,
+			testutils.GenerateRandomScalar(),
+		)
+		require.NoError(t, err)
+
+		// Try decrypting with wrong secret key
+		wrongKeyPair := testutils.GenerateRandomKeyPair(scheme.G2(), scheme.Z())
+		decrypted := scheme.DecryptSecondLevel(encryptedKey, encryptedMessage, wrongKeyPair.SecretKey)
+		require.NotEqual(t, message, decrypted)
+	})
+
+	t.Run("ReEncryption with invalid inputs", func(t *testing.T) {
+		require.Panics(t, func() {
+			scheme.ReEncryption(nil, nil)
+		})
+	})
+}
