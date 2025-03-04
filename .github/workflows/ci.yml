@@ -30,7 +30,7 @@ jobs:
 
             - name: Run tests with coverage
               working-directory: ./go
-              run:  go test -coverprofile=coverage.out -covermode=atomic $(go list ./... | grep -v "/mocks")
+              run:  go test -coverprofile=coverage.out -covermode=atomic $(go list ./... | grep -v "/mocks" | grep -v "/testutils")
 
             - name: Upload coverage to Codecov
               uses: codecov/codecov-action@v5
