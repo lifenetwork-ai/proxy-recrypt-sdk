@@ -129,7 +129,7 @@ func (p *preScheme) decryptFirstLevelKey(encryptedKey *types.FirstLevelSymmetric
 
 	symmetricKeyGT := new(bn254.GT).Div(encryptedKey.Second, temp)
 
-	symmetricKey, err := crypto.DeriveKeyFromGT(symmetricKeyGT, 32)
+	symmetricKey, err := utils.DeriveKeyFromGT(symmetricKeyGT, 32)
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to derive key: %v", err)
@@ -147,7 +147,7 @@ func (p *preScheme) decryptSecondLevelKey(encryptedKey *types.SecondLevelSymmetr
 	}
 
 	symmetricKeyGT := new(bn254.GT).Div(encryptedKey.Second, new(bn254.GT).Exp(temp, secretKey.First))
-	symmetricKey, err := crypto.DeriveKeyFromGT(symmetricKeyGT, 32)
+	symmetricKey, err := utils.DeriveKeyFromGT(symmetricKeyGT, 32)
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to derive key: %v", err)

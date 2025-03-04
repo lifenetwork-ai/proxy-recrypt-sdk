@@ -7,9 +7,9 @@ import (
 	"github.com/consensys/gnark-crypto/ecc/bn254"
 	"github.com/tuantran-genetica/human-network-crypto-lib/pkg/crypto"
 	"github.com/tuantran-genetica/human-network-crypto-lib/pkg/pre"
-	"github.com/tuantran-genetica/human-network-crypto-lib/pkg/pre/testutils"
 	"github.com/tuantran-genetica/human-network-crypto-lib/pkg/pre/types"
 	"github.com/tuantran-genetica/human-network-crypto-lib/pkg/pre/utils"
+	"github.com/tuantran-genetica/human-network-crypto-lib/pkg/testutils"
 )
 
 type MockPreScheme struct {
@@ -40,7 +40,7 @@ func NewMockPreScheme() types.PreScheme {
 	}
 
 	symmetricKeyGt := testutils.LoadMockSymmetricKeyGt()
-	key, _ := crypto.DeriveKeyFromGT(symmetricKeyGt, 32)
+	key, _ := utils.DeriveKeyFromGT(symmetricKeyGt, 32)
 
 	return &MockPreScheme{
 		g1:             &g1,
@@ -72,12 +72,12 @@ func (m *MockPreScheme) SecondLevelEncryption(_ *types.SecretKey, _ string, _ *b
 	keyGTBytes := m.SymmetricKeyGT.Bytes()
 
 	// write to mocks folder if not exists
-	err := utils.WriteAsBase64IfNotExists("../../../testdata/symmetric_key_gt.txt", keyGTBytes[:])
+	err := testutils.WriteAsBase64IfNotExists("../../../testdata/symmetric_key_gt.txt", keyGTBytes[:])
 	if err != nil {
 		panic(err)
 	}
 
-	err = utils.WriteAsBase64IfNotExists("../../../testdata/symmetric_key.txt", m.SymmetricKey)
+	err = testutils.WriteAsBase64IfNotExists("../../../testdata/symmetric_key.txt", m.SymmetricKey)
 	if err != nil {
 		panic(err)
 	}
@@ -85,7 +85,7 @@ func (m *MockPreScheme) SecondLevelEncryption(_ *types.SecretKey, _ string, _ *b
 	encryptedMessage, _ := crypto.EncryptAESGCM(m.Message, m.SymmetricKey, &crypto.AESGCMOptions{
 		Mock: true,
 	})
-	err = utils.WriteAsBase64IfNotExists("../../../testdata/encrypted_message.txt", encryptedMessage)
+	err = testutils.WriteAsBase64IfNotExists("../../../testdata/encrypted_message.txt", encryptedMessage)
 	if err != nil {
 		panic(err)
 	}
@@ -119,7 +119,7 @@ func (m *MockPreScheme) DecryptFirstLevel(encryptedKey *types.FirstLevelSymmetri
 	fmt.Println("temp", temp.Bytes())
 	symmetricKeyGT := new(bn254.GT).Div(encryptedKey.Second, temp)
 	// fmt.Println("encrypted key first: ", encryptedKey.First.Bytes())
-	symmetricKey, _ := crypto.DeriveKeyFromGT(symmetricKeyGT, 32)
+	symmetricKey, _ := utils.DeriveKeyFromGT(symmetricKeyGT, 32)
 
 	decryptedMessage, _ := crypto.DecryptAESGCM(encryptedMessage, symmetricKey)
 	return string(decryptedMessage)
@@ -133,7 +133,7 @@ func (m *MockPreScheme) DecryptSecondLevel(encryptedKey *types.SecondLevelSymmet
 	}
 
 	symmetricKeyGT := new(bn254.GT).Div(encryptedKey.Second, new(bn254.GT).Exp(temp, m.AliceKeyPair.SecretKey.First))
-	symmetricKey, _ := crypto.DeriveKeyFromGT(symmetricKeyGT, 32)
+	symmetricKey, _ := utils.DeriveKeyFromGT(symmetricKeyGT, 32)
 
 	decryptedMessage, _ := crypto.DecryptAESGCM(encryptedMessage, symmetricKey)
 	return string(decryptedMessage)

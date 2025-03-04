@@ -1,15 +1,13 @@
 package utils
 
 import (
-	"crypto/rand"
-	"encoding/base64"
-	"encoding/hex"
-	"math/big"
-
-	"os"
+	"crypto/sha256"
+	"fmt"
+	"io"
 
 	"github.com/consensys/gnark-crypto/ecc/bn254"
 	"github.com/tuantran-genetica/human-network-crypto-lib/pkg/pre/types"
+	"golang.org/x/crypto/hkdf"
 )
 
 // generateSystemParameters returns the system parameters for pairing-based cryptography:
@@ -35,80 +33,41 @@ func SecretToPubkey(secret *types.SecretKey, g *bn254.G2Affine, Z *bn254.GT) *ty
 	}
 }
 
-// GenerateRandomKeyPair generates a random key pair for the PRE scheme.
-// It returns a random key pair with a random public key and secret key.
-// The public key is generated from the secret key using the system parameters g and Z.
-func GenerateRandomKeyPair(g *bn254.G2Affine, Z *bn254.GT) *types.KeyPair {
-	sk := &types.SecretKey{
-		First:  GenerateRandomScalar(),
-		Second: GenerateRandomScalar(),
+// DeriveKeyFromGT derives a symmetric key of specified size (16, 24, or 32 bytes) from a bn254.GT element.
+// The function returns the derived symmetric key or an error if derivation fails.
+func DeriveKeyFromGT(gtElement *bn254.GT, keySize int) ([]byte, error) {
+	// Validate inputs
+	if gtElement == nil {
+		return nil, fmt.Errorf("GT element is nil")
+	}
+	if keySize != 16 && keySize != 24 && keySize != 32 {
+		return nil, fmt.Errorf("invalid key size: must be 16, 24, or 32 bytes")
 	}
 
-	pk := SecretToPubkey(sk, g, Z)
-
-	return &types.KeyPair{
-		PublicKey: pk,
-		SecretKey: sk,
-	}
-}
-
-func GenerateRandomScalar() *big.Int {
-	// Get the order of BN254 curve
-	order := bn254.ID.ScalarField()
-	// Generate random scalar in [0, order-1]
-	scalar, _ := rand.Int(rand.Reader, order)
-	return scalar
-}
-
-func GenerateRandomGTElem() *bn254.GT {
-	elem, _ := new(bn254.GT).SetRandom()
-	return elem
-}
-
-func GenerateRandomG1Elem() *bn254.G1Affine {
-	_, _, g1, _ := bn254.Generators()
-	randomScalar := GenerateRandomScalar()
-	elem := g1.ScalarMultiplicationBase(randomScalar)
-	return elem
-}
-
-func GenerateRandomG2Elem() *bn254.G2Affine {
-	_, _, _, g2 := bn254.Generators()
-	randomScalar := GenerateRandomScalar()
-	elem := g2.ScalarMultiplicationBase(randomScalar)
-	return elem
-}
-
-func GenerateMockSecondLevelCipherText(_ int) *types.SecondLevelSymmetricKey {
-	return &types.SecondLevelSymmetricKey{
-		First:  GenerateRandomG1Elem(),
-		Second: GenerateRandomGTElem(),
-	}
-}
-
-func GenerateMockNonce() []byte {
-	return []byte{223, 226, 69, 90, 252, 126, 59, 176, 98, 14, 194, 123}
-}
-
-// GenerateRandomString creates a cryptographically secure random string of fixed length
-func GenerateRandomString(length int) string {
-	// Calculate number of bytes needed for requested length
-	// Each byte becomes 2 hex characters
-	bytes := make([]byte, (length+1)/2)
-
-	// Generate random bytes using crypto/rand
-	if _, err := rand.Read(bytes); err != nil {
-		return ""
+	// Get bytes from GT element
+	gtBytes := gtElement.Bytes()
+	if len(gtBytes) == 0 {
+		return nil, fmt.Errorf("failed to get bytes from GT element")
 	}
 
-	// Convert to hex string and trim to exact length
-	return hex.EncodeToString(bytes)[:length]
-}
-func WriteAsBase64IfNotExists(filename string, data []byte) error {
-	_, err := os.Stat(filename)
-	if os.IsNotExist(err) {
-		base64Form := base64.StdEncoding.EncodeToString(data)
-		return os.WriteFile(filename, []byte(base64Form), 0600)
+	salt := []byte("PRE_derive_key")
+
+	// Use HKDF to derive the key
+	hkdf := hkdf.New(sha256.New,
+		gtBytes[:],                  // Input keying material
+		salt,                        // Salt (optional)
+		[]byte("PRE_symmetric_key"), // Info (context)
+	)
+
+	// Extract the key
+	symmetricKey := make([]byte, keySize)
+	if _, err := io.ReadFull(hkdf, symmetricKey); err != nil {
+		return nil, fmt.Errorf("failed to derive key: %v", err)
 	}
-	return nil
+
+	if len(symmetricKey) != keySize {
+		return nil, fmt.Errorf("derived key is not the expected size")
+	}
+
+	return symmetricKey, nil
 }

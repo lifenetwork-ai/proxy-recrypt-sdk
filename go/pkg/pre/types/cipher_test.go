@@ -5,13 +5,13 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"github.com/tuantran-genetica/human-network-crypto-lib/pkg/pre/types"
-	"github.com/tuantran-genetica/human-network-crypto-lib/pkg/pre/utils"
+	"github.com/tuantran-genetica/human-network-crypto-lib/pkg/testutils"
 )
 
 func TestToAndFromBytes(t *testing.T) {
 	firstLevelSymKey := &types.FirstLevelSymmetricKey{
-		First:  utils.GenerateRandomGTElem(),
-		Second: utils.GenerateRandomGTElem(),
+		First:  testutils.GenerateRandomGTElem(),
+		Second: testutils.GenerateRandomGTElem(),
 	}
 
 	firstLevelBytes := firstLevelSymKey.ToBytes()
@@ -22,12 +22,42 @@ func TestToAndFromBytes(t *testing.T) {
 
 func TestToAndFromBytesSecondLevel(t *testing.T) {
 	secondLevelSymKey := &types.SecondLevelSymmetricKey{
-		First:  utils.GenerateRandomG1Elem(),
-		Second: utils.GenerateRandomGTElem(),
+		First:  testutils.GenerateRandomG1Elem(),
+		Second: testutils.GenerateRandomGTElem(),
 	}
 
 	secondLevelBytes := secondLevelSymKey.ToBytes()
 	recoveredSecondLevelSymKey := new(types.SecondLevelSymmetricKey).FromBytes(secondLevelBytes)
 
 	require.Equal(t, secondLevelSymKey, recoveredSecondLevelSymKey)
+}
+
+func TestCipherErrors(t *testing.T) {
+	t.Run("FirstLevelSymmetricKey nil receiver", func(t *testing.T) {
+		var key *types.FirstLevelSymmetricKey
+		err := key.FromString("invalid")
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "nil receiver")
+	})
+
+	t.Run("FirstLevelSymmetricKey invalid hex", func(t *testing.T) {
+		key := &types.FirstLevelSymmetricKey{}
+		err := key.FromString("invalid hex")
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "failed to decode hex string")
+	})
+
+	t.Run("SecondLevelSymmetricKey nil receiver", func(t *testing.T) {
+		var key *types.SecondLevelSymmetricKey
+		err := key.FromString("invalid")
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "nil receiver")
+	})
+
+	t.Run("SecondLevelSymmetricKey invalid data length", func(t *testing.T) {
+		key := &types.SecondLevelSymmetricKey{}
+		err := key.FromString("1234")
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "invalid data length")
+	})
 }
