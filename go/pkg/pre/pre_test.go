@@ -111,21 +111,3 @@ func TestGenerateKeyPair(t *testing.T) {
 	require.Equal(t, pk.First, new(bn254.GT).Exp(*scheme.Z(), sk.First))
 	require.Equal(t, pk.Second, new(bn254.G2Affine).ScalarMultiplication(scheme.G2(), sk.Second))
 }
-
-func TestPow(t *testing.T) {
-	scheme := mocks.NewMockPreScheme()
-
-	scalar := scheme.(*mocks.MockPreScheme).Scalar
-
-	Z := scheme.Z()
-	g1 := scheme.G1()
-	g2 := scheme.G2()
-
-	// Z^scalar
-	ZScalar := new(bn254.GT).Exp(*Z, scalar)
-	fmt.Println("Z", Z.Bytes())
-	fmt.Println("g1", g1.RawBytes())
-	fmt.Println("g2", g2.RawBytes())
-	fmt.Println("scalar", scalar)
-	fmt.Println("Z^scalar", ZScalar.Bytes())
-}
