@@ -5,8 +5,6 @@ import {
 } from "./utils";
 import { BN254CurveWrapper } from "./crypto";
 import { PreClient } from "./client";
-import fs from "fs/promises";
-import { FirstLevelSymmetricKey } from "./types";
 import {
   loadAllTestData,
   loadMessage,

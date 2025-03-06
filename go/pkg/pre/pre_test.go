@@ -87,15 +87,6 @@ func TestMockPreFullFlow(t *testing.T) {
 	require.Equal(t, string(scheme.Message), decryptedMessageAlice)
 }
 
-func BenchmarkReEncryption(b *testing.B) {
-	scheme := pre.NewPreScheme()
-	cipherText := testutils.GenerateMockSecondLevelCipherText(500)
-	reKey := testutils.GenerateRandomG2Elem()
-	for n := 0; n < b.N; n++ {
-		scheme.Proxy.ReEncryption(cipherText, reKey)
-	}
-}
-
 func TestGenerateKeyPair(t *testing.T) {
 	scheme := pre.NewPreScheme()
 
