@@ -18,7 +18,8 @@
         "bigint-mod-arith": "^3.3.1",
         "bn.js": "^5.2.1",
         "i": "^0.3.7",
-        "npm": "^11.1.0"
+        "npm": "^11.1.0",
+        "shamir-secret-sharing": "^0.0.4"
     },
     "devDependencies": {
         "@jest/globals": "^29.7.0",
