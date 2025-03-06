@@ -56,7 +56,7 @@ func TestSystemParameters(t *testing.T) {
 	require.NotNil(t, Z)
 
 	// Verify that Z = e(g1, g2)
-	computed, err := bn254.Pair([]bn254.G1Affine{g1}, []bn254.G2Affine{g2})
+	computed, err := bn254.Pair([]bn254.G1Affine{*g1}, []bn254.G2Affine{*g2})
 	require.NoError(t, err)
-	require.Equal(t, Z, computed)
+	require.Equal(t, *Z, computed)
 }

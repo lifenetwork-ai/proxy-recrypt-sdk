@@ -6,6 +6,12 @@ import (
 	"github.com/consensys/gnark-crypto/ecc/bn254"
 )
 
+type SystemParams struct {
+	G1 *bn254.G1Affine
+	G2 *bn254.G2Affine
+	Z  *bn254.GT
+}
+
 // PreScheme defines the interface for a proxy re-encryption scheme
 /*
 This flow demonstrates how Party A can send an encrypted message to Party B through a proxy
@@ -81,8 +87,14 @@ using proxy re-encryption. This is useful when:
 // 4. A's secret key remains secure even if proxy and B collude
 // 5. Re-encryption key is specific to A->B relationship
 
-// PreScheme defines the interface for a proxy re-encryption scheme
-type PreScheme interface {
+type PreProxy interface {
+	// ReEncryption transforms a second-level ciphertext to a first-level one
+	// Takes a second-level encrypted key and a re-encryption key
+	// Returns a first-level encrypted key
+	ReEncryption(encryptedKey *SecondLevelSymmetricKey, reKey *bn254.G2Affine) *FirstLevelSymmetricKey
+}
+
+type PreClient interface {
 	// GenerateReEncryptionKey creates a re-encryption key for A->B transformation
 	// Takes a portion of secret key from A and a portion of public key from B
 	// Returns a point in the G2 group
@@ -91,14 +103,6 @@ type PreScheme interface {
 	// SecondLevelEncryption encrypts a message m under a public key
 	// Returns the encrypted symmetric key and the encrypted message
 	SecondLevelEncryption(secretA *SecretKey, message string, scalar *big.Int) (*SecondLevelSymmetricKey, []byte, error)
-
-	// ReEncryption transforms a second-level ciphertext to a first-level one
-	// Takes a second-level encrypted key and a re-encryption key
-	// Returns a first-level encrypted key
-	ReEncryption(encryptedKey *SecondLevelSymmetricKey, reKey *bn254.G2Affine) *FirstLevelSymmetricKey
-
-	// SecretToPubkey derives a public key from a secret key
-	SecretToPubkey(secret *SecretKey) *PublicKey
 
 	// DecryptFirstLevel decrypts message using a first-level encrypted key
 	// Takes an encrypted key, encrypted message, and a secret key
@@ -109,11 +113,11 @@ type PreScheme interface {
 	// Takes an encrypted key, encrypted message, and a secret key
 	// Returns the decrypted message as a string
 	DecryptSecondLevel(encryptedKey *SecondLevelSymmetricKey, encryptedMessage []byte, secretKey *SecretKey) string
-	IGet
 }
 
-type IGet interface {
-	G1() *bn254.G1Affine
-	G2() *bn254.G2Affine
-	Z() *bn254.GT
+// preScheme implements the PreScheme interface
+type PreScheme struct {
+	Client PreClient
+	Proxy  PreProxy
+	Params SystemParams
 }

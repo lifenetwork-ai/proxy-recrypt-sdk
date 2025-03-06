@@ -18,12 +18,12 @@ import (
 // These parameters are foundational for constructing pairing-based cryptographic schemes.
 // The generators g1 and g2 are obtained from the BN254 curve's built-in generators,
 // and Z is computed as their pairing.
-func GenerateSystemParameters() (g1 bn254.G1Affine, g2 bn254.G2Affine, Z bn254.GT) {
-	_, _, g1, g2 = bn254.Generators()
+func GenerateSystemParameters() (*bn254.G1Affine, *bn254.G2Affine, *bn254.GT) {
+	_, _, g1, g2 := bn254.Generators()
 
-	Z, _ = bn254.Pair([]bn254.G1Affine{g1}, []bn254.G2Affine{g2})
+	Z, _ := bn254.Pair([]bn254.G1Affine{g1}, []bn254.G2Affine{g2})
 
-	return g1, g2, Z
+	return &g1, &g2, &Z
 }
 
 func SecretToPubkey(secret *types.SecretKey, g *bn254.G2Affine, Z *bn254.GT) *types.PublicKey {

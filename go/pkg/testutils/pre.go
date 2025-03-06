@@ -10,11 +10,11 @@ import (
 	"github.com/tuantran-genetica/human-network-crypto-lib/pkg/pre/utils"
 )
 
-func LoadReKey(aliceKeypair, bobKeypair *types.KeyPair, scheme types.PreScheme) *bn254.G2Affine {
+func LoadReKey(aliceKeypair, bobKeypair *types.KeyPair, client types.PreClient) *bn254.G2Affine {
 	reKeyBase64FromFile, err := os.ReadFile("../../../testdata/rekey.txt")
 	var rekeyBytes []byte
 	if err != nil {
-		reKey := scheme.GenerateReEncryptionKey(aliceKeypair.SecretKey, bobKeypair.PublicKey)
+		reKey := client.GenerateReEncryptionKey(aliceKeypair.SecretKey, bobKeypair.PublicKey)
 		reKeyRawBytes := reKey.RawBytes()
 		err = WriteAsBase64IfNotExists("../../../testdata/rekey.txt", reKeyRawBytes[:])
 		if err != nil {
