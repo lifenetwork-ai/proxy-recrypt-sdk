@@ -1,4 +1,4 @@
-import { PreSchemeImpl } from "../pre";
+import { PreClient } from "../client";
 import { loadRandomScalar } from "../utils/testUtils";
 import { BN254CurveWrapper } from "./bn254";
 
@@ -12,7 +12,7 @@ describe("Bn254 wrapper", () => {
     const randomScalar = await loadRandomScalar();
     const result = BN254CurveWrapper.gtPow(Z, randomScalar);
     const actualBytes = BN254CurveWrapper.GTToBytes(result);
-    const scheme = new PreSchemeImpl();
+    const scheme = new PreClient();
 
     const expectedBytes = BN254CurveWrapper.GTToBytes(
       BN254CurveWrapper.gtPow(scheme.Z, randomScalar)
