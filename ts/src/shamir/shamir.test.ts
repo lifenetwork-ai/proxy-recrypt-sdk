@@ -18,7 +18,32 @@ describe("Test Shamir's Secret Sharing", () => {
 
     const sharesArray = await splitSecret(secret, threshold, shares);
 
-    const combinedSecret = await combineSecret(sharesArray);
+    const combinedSecret = await combineSecret(
+      new Array(sharesArray[0], sharesArray[1])
+    );
     expect(Buffer.from(combinedSecret).toString()).toEqual(secret.toString());
+  });
+
+  test("Split then combine complex secret", async () => {
+    const secret = Buffer.from(generateRandomSymmetricKeyFromGT().key);
+
+    const threshold = 3;
+    const shares = 5;
+
+    const sharesArray = await splitSecret(secret, threshold, shares);
+
+    const combinedSecret = await combineSecret(
+      new Array(sharesArray[0], sharesArray[1], sharesArray[2])
+    );
+
+    const combinedSecret2 = await combineSecret(
+      new Array(sharesArray[1], sharesArray[2], sharesArray[3])
+    );
+
+    expect(Buffer.from(combinedSecret).toString()).toBeTruthy();
+    expect(Buffer.from(combinedSecret).toString()).toEqual(secret.toString());
+    expect(Buffer.from(combinedSecret).toString()).toEqual(
+      combinedSecret2.toString()
+    );
   });
 });
