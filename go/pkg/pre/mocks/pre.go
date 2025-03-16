@@ -25,12 +25,12 @@ type MockPreScheme struct {
 	SymmetricKey   []byte
 }
 
-func NewMockPreScheme() types.PreScheme {
+func NewMockPreScheme() *MockPreScheme {
 	g1, g2, Z := utils.GenerateSystemParameters()
 	scheme := pre.NewPreScheme()
 	// Generate key pairs for Alice and Bob
 	aliceKeypair, bobKeypair := testutils.LoadAliceKeyPair(), testutils.LoadBobKeyPair()
-	rekey := testutils.LoadReKey(aliceKeypair, bobKeypair, scheme)
+	rekey := testutils.LoadReKey(aliceKeypair, bobKeypair, scheme.Client)
 
 	message := testutils.LoadMessage()
 
@@ -43,9 +43,9 @@ func NewMockPreScheme() types.PreScheme {
 	key, _ := utils.DeriveKeyFromGT(symmetricKeyGt, 32)
 
 	return &MockPreScheme{
-		g1:             &g1,
-		g2:             &g2,
-		z:              &Z,
+		g1:             g1,
+		g2:             g2,
+		z:              Z,
 		ReKey:          rekey,
 		Scalar:         scalar,
 		AliceKeyPair:   aliceKeypair,
