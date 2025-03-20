@@ -9,7 +9,6 @@
   let originalImageUrl: string | null = null;
   let encryptedData: Uint8Array | null = null;
   let encryptedBase64: string | null = null;
-  let decryptedImage: string | null = null;
   let encryptedSize: number;
   let pixelGrid: Array<string> = [];
   let decryptionDetails: string | null = null;
@@ -125,7 +124,7 @@
       const secret = client.generateRandomKeyPair().secretKey;
       const encryptedData = await client.encryptData(
         secret,
-        await selectedFile.bytes()
+        new Uint8Array(await selectedFile.arrayBuffer())
       );
       encryptedBase64 = arrayBufferToBase64(encryptedData.encryptedMessage);
       encryptedSize = encryptedBase64.length;

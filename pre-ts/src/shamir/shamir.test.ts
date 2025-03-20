@@ -3,15 +3,17 @@ import { generateRandomSymmetricKeyFromGT } from "../crypto";
 
 describe("Test Shamir's Secret Sharing", () => {
   test("Split then combine simple secret", async () => {
-    const secret = Buffer.from("Hello, World!");
+    const secret = new Uint8Array(
+      "Hello, world!".split("").map((c) => c.charCodeAt(0))
+    );
     const threshold = 2;
     const shares = 3;
     const sharesArray = await splitSecret(secret, threshold, shares);
     const combinedSecret = await combineSecret(sharesArray);
-    expect(Buffer.from(combinedSecret).toString()).toEqual(secret.toString());
+    expect(combinedSecret.toString()).toEqual(secret.toString());
   });
   test("Split then combine complex secret", async () => {
-    const secret = Buffer.from(generateRandomSymmetricKeyFromGT().key);
+    const secret = (await generateRandomSymmetricKeyFromGT()).key;
 
     const threshold = 2;
     const shares = 3;
@@ -21,11 +23,11 @@ describe("Test Shamir's Secret Sharing", () => {
     const combinedSecret = await combineSecret(
       new Array(sharesArray[0], sharesArray[1])
     );
-    expect(Buffer.from(combinedSecret).toString()).toEqual(secret.toString());
+    expect(combinedSecret.toString()).toEqual(secret.toString());
   });
 
   test("Split then combine complex secret", async () => {
-    const secret = Buffer.from(generateRandomSymmetricKeyFromGT().key);
+    const secret = (await generateRandomSymmetricKeyFromGT()).key;
 
     const threshold = 3;
     const shares = 5;
@@ -41,9 +43,7 @@ describe("Test Shamir's Secret Sharing", () => {
     );
 
     expect(Buffer.from(combinedSecret).toString()).toBeTruthy();
-    expect(Buffer.from(combinedSecret).toString()).toEqual(secret.toString());
-    expect(Buffer.from(combinedSecret).toString()).toEqual(
-      combinedSecret2.toString()
-    );
+    expect(combinedSecret.toString()).toEqual(secret.toString());
+    expect(combinedSecret.toString()).toEqual(combinedSecret2.toString());
   });
 });
