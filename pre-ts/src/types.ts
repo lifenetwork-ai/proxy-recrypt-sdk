@@ -1,4 +1,5 @@
 import { G1Point, G2Point, GTElement } from "./crypto/bn254";
+import { bytesToHex, hexToBytes } from "./utils";
 
 export interface KeyPair {
   secretKey: SecretKey;
@@ -15,13 +16,16 @@ export class SecretKey {
   }
 
   toBytes(): Uint8Array {
-    const firstBytes = this.first.toString(16).padStart(64, "0");
-    const secondBytes = this.second.toString(16).padStart(64, "0");
-    return new Uint8Array(Buffer.from(firstBytes + secondBytes, "hex"));
+    // Convert bigints to hex strings
+    const firstHex = this.first.toString(16).padStart(64, "0");
+    const secondHex = this.second.toString(16).padStart(64, "0");
+
+    // Convert combined hex string to Uint8Array
+    return hexToBytes(firstHex + secondHex);
   }
 
   static fromBytes(bytes: Uint8Array): SecretKey {
-    const hex = Buffer.from(bytes).toString("hex");
+    const hex = bytesToHex(bytes);
     return new SecretKey(
       BigInt("0x" + hex.slice(0, 64)),
       BigInt("0x" + hex.slice(64, 128))

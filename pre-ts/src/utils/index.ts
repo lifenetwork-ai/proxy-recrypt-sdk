@@ -1,6 +1,11 @@
+export * from "./bytes";
+export * from "./keypair";
 import { BN254CurveWrapper, G2Point, GTElement } from "../crypto";
 import { KeyPair, PublicKey, SecretKey } from "../types";
 import { Fp, Fp12, Fp6, Fp2 } from "@noble/curves/abstract/tower";
+import fs from "fs";
+import { Buffer } from "buffer";
+import { IField } from "@noble/curves/abstract/modular";
 
 export function secretToPubkey(
   secret: SecretKey,
@@ -11,76 +16,6 @@ export function secretToPubkey(
     first: BN254CurveWrapper.gtPow(Z, secret.first),
     second: BN254CurveWrapper.g2ScalarMul(g, secret.second),
   };
-}
-
-import fs from "fs";
-import { Buffer } from "buffer";
-import { IField } from "@noble/curves/abstract/modular";
-// Interface for JSON serialization/deserialization
-interface SerializableKeyPair {
-  PublicKey: {
-    First: string; // base64 encoded GT element
-    Second: string; // base64 encoded G2 point
-  };
-  SecretKey: {
-    First: string; // hex encoded bigint
-    Second: string; // hex encoded bigint
-  };
-}
-/**
- * Loads a keypair from a file
- * @param filename Path to the keypair file
- * @returns Promise resolving to the loaded KeyPair
- * @throws Error if file reading or parsing fails
- */
-export async function loadKeyPairFromFile(filename: string): Promise<KeyPair> {
-  // Read file
-  let jsonData: Buffer;
-  try {
-    jsonData = await fs.readFileSync(filename);
-  } catch (err) {
-    throw new Error(`Failed to read keypair file: ${err}`);
-  }
-
-  // Parse JSON
-  let serializable: SerializableKeyPair;
-  try {
-    serializable = JSON.parse(jsonData.toString());
-  } catch (err) {
-    throw new Error(`Failed to unmarshal keypair: ${err}`);
-  }
-
-  // Reconstruct KeyPair
-  const keyPair: KeyPair = {
-    publicKey: {
-      first: BN254CurveWrapper.GTFromBytes(
-        Uint8Array.from(atob(serializable.PublicKey.First), (c) =>
-          c.charCodeAt(0)
-        )
-      ),
-      second: BN254CurveWrapper.G2FromBytes(
-        Uint8Array.from(atob(serializable.PublicKey.Second), (c) =>
-          c.charCodeAt(0)
-        )
-      ),
-    },
-    secretKey: new SecretKey(
-      BigInt(`0x${serializable.SecretKey.First}`),
-      BigInt(`0x${serializable.SecretKey.Second}`)
-    ),
-  };
-
-  return keyPair;
-}
-
-export async function loadReKeyFromFile(filename: string): Promise<G2Point> {
-  // Read file
-  try {
-    let jsonData = await fs.readFileSync(filename, "utf8");
-    return BN254CurveWrapper.G2FromBytes(Buffer.from(jsonData, "base64"));
-  } catch (err) {
-    throw new Error(`Failed to read rekey file: ${err}`);
-  }
 }
 
 export function g2FromBytes(bytes: Uint8Array): { x: Fp2; y: Fp2 } {
