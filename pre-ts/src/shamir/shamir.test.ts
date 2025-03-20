@@ -13,7 +13,7 @@ describe("Test Shamir's Secret Sharing", () => {
     expect(combinedSecret.toString()).toEqual(secret.toString());
   });
   test("Split then combine complex secret", async () => {
-    const secret = generateRandomSymmetricKeyFromGT().key;
+    const secret = (await generateRandomSymmetricKeyFromGT()).key;
 
     const threshold = 2;
     const shares = 3;
@@ -27,7 +27,7 @@ describe("Test Shamir's Secret Sharing", () => {
   });
 
   test("Split then combine complex secret", async () => {
-    const secret = generateRandomSymmetricKeyFromGT().key;
+    const secret = (await generateRandomSymmetricKeyFromGT()).key;
 
     const threshold = 3;
     const shares = 5;

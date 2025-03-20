@@ -45,7 +45,7 @@ export class PreClient {
   ): Promise<SecondLevelEncryptionResponse> {
     // Generate random symmetric key only if not provided
     if (!keyGT || !key) {
-      const generatedKeys = generateRandomSymmetricKeyFromGT();
+      const generatedKeys = await generateRandomSymmetricKeyFromGT();
       keyGT = keyGT || generatedKeys.keyGT;
       key = key || generatedKeys.key;
     }
@@ -75,7 +75,7 @@ export class PreClient {
     payload: FirstLevelEncryptionResponse,
     secretKey: SecretKey
   ): Promise<Uint8Array> {
-    let symmetricKey = this.decryptFirstLevelKey(
+    let symmetricKey = await this.decryptFirstLevelKey(
       payload.encryptedKey,
       secretKey
     );
@@ -88,10 +88,10 @@ export class PreClient {
     return decryptedMessage;
   }
 
-  decryptFirstLevelKey(
+  async decryptFirstLevelKey(
     encryptedKey: FirstLevelSymmetricKey,
     secretKey: SecretKey
-  ): Uint8Array {
+  ): Promise<Uint8Array> {
     const order = bn254.fields.Fr.ORDER;
 
     // console.log("scalar", bigintModArith.modInv(secretKey.second, order));
@@ -107,7 +107,7 @@ export class PreClient {
     );
     // console.log("temp", BN254CurveWrapper.GTToBytes(temp));
     const symmetricKeyGT = BN254CurveWrapper.gtDiv(encryptedKey.second, temp);
-    const symmetricKey = deriveKeyFromGT(symmetricKeyGT);
+    const symmetricKey = await deriveKeyFromGT(symmetricKeyGT);
 
     return symmetricKey;
   }
@@ -117,23 +117,26 @@ export class PreClient {
     encryptedMessage: Uint8Array,
     secretKey: SecretKey
   ): Promise<Uint8Array> {
-    let symmetricKey = this.decryptSecondLevelKey(encryptedKey, secretKey);
+    let symmetricKey = await this.decryptSecondLevelKey(
+      encryptedKey,
+      secretKey
+    );
 
     let decryptedMessage = await decryptAESGCM(encryptedMessage, symmetricKey);
 
     return decryptedMessage;
   }
 
-  decryptSecondLevelKey(
+  async decryptSecondLevelKey(
     encryptedKey: SecondLevelSymmetricKey,
     secretKey: SecretKey
-  ): Uint8Array {
+  ): Promise<Uint8Array> {
     const temp = BN254CurveWrapper.pairing(encryptedKey.first, this.G2);
     const symmetricKeyGT = BN254CurveWrapper.gtDiv(
       encryptedKey.second,
       BN254CurveWrapper.gtPow(temp, secretKey.first)
     );
-    const symmetricKey = deriveKeyFromGT(symmetricKeyGT);
+    const symmetricKey = await deriveKeyFromGT(symmetricKeyGT);
 
     return symmetricKey;
   }

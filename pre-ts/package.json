@@ -21,6 +21,7 @@
     "bigint-mod-arith": "^3.3.1",
     "bn.js": "^5.2.1",
     "i": "^0.3.7",
+    "js-crypto-hkdf": "^1.0.7",
     "npm": "^11.1.0",
     "shamir-secret-sharing": "^0.0.4"
   },
