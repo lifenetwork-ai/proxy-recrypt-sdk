@@ -28,32 +28,31 @@ const generateRandomFile = async (
 
   const chunkSize = 1024 * 1024; // Generate in 1MB chunks for memory efficiency
   const fd = fs.openSync(filename, "w");
-  
+
   try {
     let remainingBytes = sizeInBytes;
-  
+
     while (remainingBytes > 0) {
       const currentChunkSize = Math.min(chunkSize, remainingBytes);
       const randomData = crypto.randomBytes(currentChunkSize);
       fs.writeSync(fd, randomData);
       remainingBytes -= currentChunkSize;
-    } 
-
-      // Log progress for large files
-      if (
-        sizeInBytes > 10 * 1024 * 1024 &&
-        remainingBytes % (5 * 1024 * 1024) === 0
-      ) {
-        console.log(
-          `Progress: ${Math.round((1 - remainingBytes / sizeInBytes) * 100)}%`
-        );
-      }
-    console.log(`File generated successfully: ${filename}`);
-  }
-    finally {
-      // Always close the file descriptor when done
-      fs.closeSync(fd);
     }
+
+    // Log progress for large files
+    if (
+      sizeInBytes > 10 * 1024 * 1024 &&
+      remainingBytes % (5 * 1024 * 1024) === 0
+    ) {
+      console.log(
+        `Progress: ${Math.round((1 - remainingBytes / sizeInBytes) * 100)}%`
+      );
+    }
+    console.log(`File generated successfully: ${filename}`);
+  } finally {
+    // Always close the file descriptor when done
+    fs.closeSync(fd);
+  }
 };
 
 /**
@@ -129,7 +128,7 @@ const runBenchmarks = async () => {
     );
 
     // Step 1: Generate secret and shares
-    const secret = Buffer.from(generateRandomSymmetricKeyFromGT().key);
+    const secret = Buffer.from((await generateRandomSymmetricKeyFromGT()).key);
 
     const threshold = 2;
     const totalShares = 3;

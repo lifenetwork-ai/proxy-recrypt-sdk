@@ -20,6 +20,30 @@ import * as bigintModArith from "bigint-mod-arith";
 import { Crypto } from "@peculiar/webcrypto";
 import { generateRandomSecretKey } from "./utils/keypair";
 
+function getCrypto() {
+  if (typeof window !== "undefined" && window.crypto) {
+    // Browser environment
+    return window.crypto;
+  } else if (typeof global !== "undefined") {
+    // Node.js environment
+    try {
+      // Node.js v19+ has webcrypto as part of the global crypto
+      const nodeCrypto = require("crypto");
+      if (nodeCrypto.webcrypto) {
+        return nodeCrypto.webcrypto;
+      }
+      // Fallback to @peculiar/webcrypto for older Node versions
+      const { Crypto } = require("@peculiar/webcrypto");
+      return new Crypto();
+    } catch (error) {
+      throw new Error(
+        "Crypto support not available. Please install @peculiar/webcrypto package."
+      );
+    }
+  }
+  throw new Error("No crypto implementation available in this environment");
+}
+
 export class PreClient {
   G1: G1Point;
   G2: G2Point;
@@ -51,7 +75,7 @@ export class PreClient {
     }
 
     if (!nonce) {
-      nonce = new Crypto().getRandomValues(new Uint8Array(12));
+      nonce = getCrypto().getRandomValues(new Uint8Array(12));
     }
     const encryptedMessage = await encryptAESGCM(message, key, nonce);
     const first = BN254CurveWrapper.g1ScalarMul(this.G1, scalar);
