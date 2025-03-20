@@ -1,0 +1,27 @@
+import { G2Point } from "../crypto/bn254";
+import { GTElement } from "../crypto/bn254";
+import { KeyPair } from "../types";
+export declare function loadMessage(): Promise<Uint8Array>;
+export declare function loadEncryptedMessage(): Promise<Uint8Array>;
+export declare function loadRandomScalar(): Promise<bigint>;
+export declare function loadSymmetricKeyGT(): Promise<GTElement>;
+export declare function loadSymmetricKey(): Promise<Uint8Array>;
+export declare function loadReKey(): Promise<G2Point>;
+export declare function loadAliceKeyPair(): Promise<KeyPair>;
+export declare function loadBobKeyPair(): Promise<KeyPair>;
+export declare const getMockNonce: () => Uint8Array;
+export declare const getFirstLevelEncryptedKeyFirst: () => Promise<GTElement>;
+export declare const getFirstLevelEncryptedKeySecond: () => Promise<GTElement>;
+export declare const getSecondLevelEncryptedKeyFirst: () => Promise<string>;
+export declare const getSecondLevelEncryptedKeySecond: () => Promise<GTElement>;
+export declare function loadAllTestData(): Promise<{
+    message: Uint8Array<ArrayBufferLike>;
+    encryptedMessage: Uint8Array<ArrayBufferLike>;
+    randomScalar: bigint;
+    symmetricKeyGT: import("@noble/curves/abstract/tower").Fp12;
+    symmetricKey: Uint8Array<ArrayBufferLike>;
+    mockNonce: Uint8Array<ArrayBufferLike>;
+    reKey: G2Point;
+    aliceKeyPair: KeyPair;
+    bobKeyPair: KeyPair;
+}>;
