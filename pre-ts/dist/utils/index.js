@@ -34,8 +34,8 @@ export async function loadKeyPairFromFile(filename) {
     // Reconstruct KeyPair
     const keyPair = {
         publicKey: {
-            first: BN254CurveWrapper.GTFromBytes(Buffer.from(serializable.PublicKey.First, "base64")),
-            second: BN254CurveWrapper.G2FromBytes(Buffer.from(serializable.PublicKey.Second, "base64")),
+            first: BN254CurveWrapper.GTFromBytes(Uint8Array.from(atob(serializable.PublicKey.First), (c) => c.charCodeAt(0))),
+            second: BN254CurveWrapper.G2FromBytes(Uint8Array.from(atob(serializable.PublicKey.Second), (c) => c.charCodeAt(0))),
         },
         secretKey: new SecretKey(BigInt(`0x${serializable.SecretKey.First}`), BigInt(`0x${serializable.SecretKey.Second}`)),
     };

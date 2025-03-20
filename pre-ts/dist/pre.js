@@ -24,7 +24,7 @@ export class PreClient {
         if (!nonce) {
             nonce = new Crypto().getRandomValues(new Uint8Array(12));
         }
-        const encryptedMessage = await encryptAESGCM(Buffer.from(message), key, nonce);
+        const encryptedMessage = await encryptAESGCM(message, key, nonce);
         const first = BN254CurveWrapper.g1ScalarMul(this.G1, scalar);
         const second = BN254CurveWrapper.gtMul(BN254CurveWrapper.gtPow(BN254CurveWrapper.gtPow(this.Z, secretA.first), scalar), keyGT);
         const encryptedKey = { first, second };

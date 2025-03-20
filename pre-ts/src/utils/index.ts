@@ -54,10 +54,14 @@ export async function loadKeyPairFromFile(filename: string): Promise<KeyPair> {
   const keyPair: KeyPair = {
     publicKey: {
       first: BN254CurveWrapper.GTFromBytes(
-        Buffer.from(serializable.PublicKey.First, "base64")
+        Uint8Array.from(atob(serializable.PublicKey.First), (c) =>
+          c.charCodeAt(0)
+        )
       ),
       second: BN254CurveWrapper.G2FromBytes(
-        Buffer.from(serializable.PublicKey.Second, "base64")
+        Uint8Array.from(atob(serializable.PublicKey.Second), (c) =>
+          c.charCodeAt(0)
+        )
       ),
     },
     secretKey: new SecretKey(
