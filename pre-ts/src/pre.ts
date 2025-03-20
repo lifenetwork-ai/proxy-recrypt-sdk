@@ -17,7 +17,6 @@ import {
 import { BN254CurveWrapper, G1Point, G2Point, GTElement } from "./crypto/bn254";
 import { bn254 } from "@noble/curves/bn254";
 import * as bigintModArith from "bigint-mod-arith";
-import { Crypto } from "@peculiar/webcrypto";
 import { generateRandomSecretKey } from "./utils/keypair";
 
 function getCrypto() {
