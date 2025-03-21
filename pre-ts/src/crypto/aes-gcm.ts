@@ -59,7 +59,7 @@ export async function encryptAESGCM(
 }
 
 /**
- * Decrypts data that was encrypted using encryptAESGCM.
+ * Decrypts data that was encrypted using encryptAESGCM without using subarray.
  *
  * @param encrypted Combined nonce and ciphertext (as returned by encryptAESGCM)
  * @param key The same key used for encryption
@@ -76,9 +76,16 @@ export async function decryptAESGCM(
       throw new Error("Ciphertext too short");
     }
 
-    // Extract nonce and ciphertext
-    const nonce = encrypted.subarray(0, 12);
-    const ciphertext = encrypted.subarray(12);
+    // Extract nonce and ciphertext manually without using subarray
+    const nonce = new Uint8Array(12);
+    for (let i = 0; i < 12; i++) {
+      nonce[i] = encrypted[i];
+    }
+    
+    const ciphertext = new Uint8Array(encrypted.length - 12);
+    for (let i = 0; i < ciphertext.length; i++) {
+      ciphertext[i] = encrypted[i + 12];
+    }
 
     // Import key
     const cryptoKey = await crypto.subtle.importKey(
@@ -105,3 +112,4 @@ export async function decryptAESGCM(
     throw new Error(`Decryption failed: ${err.message}`);
   }
 }
+

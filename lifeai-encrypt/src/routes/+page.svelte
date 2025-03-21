@@ -2,12 +2,14 @@
   import * as pre from "../../../pre-ts/dist/index";
   import { browser } from "$app/environment";
   import { onMount } from "svelte";
+  import { SecretKey } from "../../../pre-ts/dist/types";
 
   const client = new pre.PreSdk();
   let shares: Array<Uint8Array> = [];
   let selectedFile: File | null = null;
   let originalImageUrl: string | null = null;
-  let encryptedData: Uint8Array | null = null;
+  let encryptedMessage: Uint8Array | null = null;
+  let secondLevelEncrypted: pre.SecondLevelEncryptionResponse | null = null;
   let encryptedBase64: string | null = null;
   let encryptedSize: number;
   let pixelGrid: Array<string> = [];
@@ -16,6 +18,12 @@
   let storedShareInfo: string | null = null;
   let decryptPassphrase: string = "";
   let errorMessage: string | null = null;
+  let reEncryptionKey: pre.G2Point | null = null;
+  let proxyStoreId: string | null = null;
+  let decryptedImage: string | null = null;
+
+  // Fixed B secret for testing purpose
+  let secretB: SecretKey = new SecretKey(66666666n, 88888888n);
 
   interface ShareData {
     share: Uint8Array;
@@ -121,17 +129,57 @@
 
   async function handleEncrypt() {
     if (selectedFile) {
-      const secret = client.generateRandomKeyPair().secretKey;
-      const encryptedData = await client.encryptData(
+      const secret = new SecretKey(1111n, 2222n);
+      secondLevelEncrypted = await client.encryptData(
         secret,
         new Uint8Array(await selectedFile.arrayBuffer())
       );
-      encryptedBase64 = arrayBufferToBase64(encryptedData.encryptedMessage);
+      encryptedBase64 = arrayBufferToBase64(
+        secondLevelEncrypted.encryptedMessage
+      );
       encryptedSize = encryptedBase64.length;
 
       // Visualize the encrypted data
-      visualizeEncryptedData(encryptedData.encryptedMessage);
+      visualizeEncryptedData(secondLevelEncrypted.encryptedMessage);
       errorMessage = null;
+
+      let pubB = client.preClient.secretToPubkey(secretB);
+      reEncryptionKey = client.preClient.generateReEncryptionKey(
+        secret.first,
+        pubB.second
+      );
+
+      console.log(
+        btoa(
+          Array.from(secondLevelEncrypted.encryptedMessage)
+            .map((byte) => String.fromCharCode(byte))
+            .join("")
+        ).slice(0, 10)
+      );
+    }
+  }
+
+  async function sendToProxy() {
+    try {
+      const proxyClient = new pre.ProxyClient();
+      const response = await proxyClient.store(
+        reEncryptionKey!,
+        secondLevelEncrypted!.encryptedKey,
+        secondLevelEncrypted!.encryptedMessage,
+        "alice"
+      );
+
+      if (response.id) {
+        proxyStoreId = response.id;
+        console.log("Successfully stored data on proxy with ID:", proxyStoreId);
+        errorMessage = null;
+      } else {
+        console.error("Failed to store data on proxy");
+        errorMessage = "Failed to store data on proxy";
+      }
+    } catch (error: any) {
+      console.error("Error storing data on proxy:", error);
+      errorMessage = "Error storing data on proxy: " + error.message;
     }
   }
 
@@ -165,53 +213,45 @@
     }
   }
 
-  //   async function handleDecrypt() {
-  //     if (encryptedData) {
-  //       try {
-  //         errorMessage = null;
+  async function handleDecryptAsB() {
+    try {
+      if (!proxyStoreId) {
+        errorMessage = "No proxy store ID available. Please store data first.";
+        return;
+      }
 
-  //         // Get the stored share data from localStorage
-  //         const storedShareData1 = browser ? localStorage.getItem("encryptionShare1") : null;
+      const proxyClient = new pre.ProxyClient();
 
-  //         // Should get from server instead
-  //         const storedShareData2 = browser ? localStorage.getItem("encryptionShare2") : null;
-  //         const storedShareData3 = browser ? localStorage.getItem("encryptionShare3") : null;
+      // Request re-encrypted data from proxy
+      const { firstLevelKey, encryptedData } =
+        await proxyClient.request(proxyStoreId);
 
-  //         const share1 = decryptShare(storedShareData1);
-  //         const share2 = decryptShare(storedShareData2);
-  //         const share3 = decryptShare(storedShareData3);
+      // Decrypt the data using Bob's secret key
+      console.log(encryptedData.slice(0, 10));
+      const decryptedData = await client.preClient.decryptFirstLevel(
+        {
+          encryptedKey: firstLevelKey,
+          encryptedMessage: new Uint8Array(
+            [...atob(encryptedData.toString())].map((char) =>
+              char.charCodeAt(0)
+            )
+          ),
+        },
+        secretB
+      );
 
-  //         if (!share1 || !share2 || !share3) {
-  //           return; // Error already set in decryptShare
-  //         }
+      // Create a blob from the decrypted data
+      const blob = new Blob([decryptedData], { type: "image/jpeg" });
+      decryptedImage = URL.createObjectURL(blob);
 
-  //         // Set the decryption details to be displayed in the UI
-  //         decryptionDetails =
-  //           "Decrypting with secret and the selected encrypted file.";
-
-  //         // Configure client with the stored share
-  //         // client.setShare(shareData.share);
-  //         const secretBytes = await pre.combineSecret([share1, share2, share3]);
-
-  //         const secret = pre.SecretKey.fromBytes(secretBytes);
-  //         // Decrypt the encrypted data using the client's decryptData method
-  //         const decryptedData = await client.decryptData(
-  //           encryptedKey,
-  //           encryptedData,
-  //           secret
-  //         );
-
-  //         // Create a Blob from the decrypted data, specifying the MIME type
-  //         const blob = new Blob([decryptedData], { type: "image/jpeg" });
-
-  //         // Generate a URL for the Blob and update the decryptedImage variable
-  //         decryptedImage = URL.createObjectURL(blob);
-  //       } catch (e) {
-  //         errorMessage = `Decryption failed: ${e.message || "Unknown error"}`;
-  //         decryptionDetails = null;
-  //       }
-  //     }
-  //   }
+      decryptionDetails = "Successfully decrypted the image as user B";
+      errorMessage = null;
+    } catch (error: any) {
+      console.error("Error decrypting data:", error);
+      errorMessage = "Error decrypting data: " + error.message;
+      decryptionDetails = null;
+    }
+  }
 
   function clearStoredShare() {
     if (browser) {
@@ -236,8 +276,8 @@
   }
 
   function downloadEncryptedData() {
-    if (encryptedData && browser) {
-      const blob = new Blob([encryptedData], {
+    if (encryptedMessage && browser) {
+      const blob = new Blob([encryptedMessage], {
         type: "application/octet-stream",
       });
       const url = URL.createObjectURL(blob);
@@ -548,93 +588,91 @@
     {/if}
   </section>
 
-  <!-- Commenting out the entire decryption section -->
-  <!--
-	<section>
-	  <h2>3. Decrypt Image</h2>
-	  <div class="process-flow">
-		<div class="flow-step">
-		  <span class="step-number">1</span>
-		  <span>Use encrypted data</span>
-		</div>
-		<div class="flow-arrow">→</div>
-		<div class="flow-step">
-		  <span class="step-number">2</span>
-		  <span>Decrypt with stored key</span>
-		</div>
-		<div class="flow-arrow">→</div>
-		<div class="flow-step">
-		  <span class="step-number">3</span>
-		  <span>View decrypted image</span>
-		</div>
-	  </div>
-  
-	  {#if encryptedData && storedShareInfo}
-		<div class="passphrase-container">
-		  <label for="decrypt-passphrase"
-			>Decryption Passphrase (if required):</label
-		  >
-		  <input
-			id="decrypt-passphrase"
-			type="password"
-			bind:value={decryptPassphrase}
-			placeholder="Enter your passphrase to decrypt"
-		  />
-		</div>
-		<button on:click={handleDecrypt}>Decrypt Image</button>
-	  {:else if encryptedData && !storedShareInfo}
-		<div class="warning-message">
-		  <svg
-			xmlns="http://www.w3.org/2000/svg"
-			width="16"
-			height="16"
-			viewBox="0 0 24 24"
-			fill="none"
-			stroke="currentColor"
-			stroke-width="2"
-			stroke-linecap="round"
-			stroke-linejoin="round"
-		  >
-			<path
-			  d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"
-			></path>
-			<line x1="12" y1="9" x2="12" y2="13"></line>
-			<line x1="12" y1="17" x2="12.01" y2="17"></line>
-		  </svg>
-		  <p>
-			No encryption key share found in storage. Please generate keys first.
-		  </p>
-		</div>
-	  {/if}
-	  {#if decryptionDetails}
-		<p class="decryption-details">{decryptionDetails}</p>
-	  {/if}
-	  {#if decryptedImage}
-		<div class="image-preview small-image">
-		  <h3>Decrypted Image</h3>
-		  <img src={decryptedImage} alt="Decrypted image" />
-		  <div class="data-source">
-			<svg
-			  xmlns="http://www.w3.org/2000/svg"
-			  width="16"
-			  height="16"
-			  viewBox="0 0 24 24"
-			  fill="none"
-			  stroke="currentColor"
-			  stroke-width="2"
-			  stroke-linecap="round"
-			  stroke-linejoin="round"
-			>
-			  <circle cx="12" cy="12" r="10"></circle>
-			  <line x1="12" y1="8" x2="12" y2="16"></line>
-			  <line x1="8" y1="12" x2="16" y2="12"></line>
-			</svg>
-			<span>Decrypted in browser</span>
-		  </div>
-		</div>
-	  {/if}
-	</section>
-	-->
+  {#if secondLevelEncrypted && reEncryptionKey}
+    <section>
+      <h2>3. Store Encrypted Data on Proxy</h2>
+      <div class="process-flow">
+        <div class="flow-step">
+          <span class="step-number">1</span>
+          <span>Store encrypted data and re-encryption key</span>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step">
+          <span class="step-number">2</span>
+          <span>Get storage ID for later retrieval</span>
+        </div>
+      </div>
+
+      <button on:click={sendToProxy}>Store on Proxy Server</button>
+
+      {#if proxyStoreId}
+        <div class="stored-share-info">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          <p>Successfully stored with ID: {proxyStoreId}</p>
+        </div>
+      {/if}
+    </section>
+
+    <section>
+      <h2>4. Decrypt as User B</h2>
+      <div class="process-flow">
+        <div class="flow-step">
+          <span class="step-number">1</span>
+          <span>Request re-encrypted data</span>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step">
+          <span class="step-number">2</span>
+          <span>Decrypt with User B's key</span>
+        </div>
+      </div>
+
+      <button on:click={handleDecryptAsB}>Decrypt as User B</button>
+
+      {#if decryptionDetails}
+        <p class="decryption-details">{decryptionDetails}</p>
+      {/if}
+
+      {#if decryptedImage}
+        <div class="image-preview small-image">
+          <h3>Decrypted Image</h3>
+          <img src={decryptedImage} alt="Decrypted image" />
+          <div class="data-source">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="16"></line>
+              <line x1="8" y1="12" x2="16" y2="12"></line>
+            </svg>
+            <span>Decrypted in browser as User B</span>
+          </div>
+        </div>
+      {/if}
+    </section>
+  {/if}
 </main>
 
 <style>

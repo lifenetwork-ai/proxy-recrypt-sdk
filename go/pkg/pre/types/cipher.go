@@ -9,13 +9,13 @@ import (
 )
 
 type FirstLevelSymmetricKey struct {
-	First  *bn254.GT // First component of the key in GT group
-	Second *bn254.GT // Second component of the key in GT group
+	First  *bn254.GT `json:"first"`  // First component of the key in GT group
+	Second *bn254.GT `json:"second"` // Second component of the key in GT group
 }
 
 type SecondLevelSymmetricKey struct {
-	First  *bn254.G1Affine // First component of the key in G1 group
-	Second *bn254.GT       // Second component of the key in GT group
+	First  *bn254.G1Affine `json:"first"`  // First component of the key in G1 group
+	Second *bn254.GT       `json:"second"` // Second component of the key in GT group
 }
 
 // ToBytes serializes FirstLevelSymmetricKey to bytes

@@ -73,6 +73,8 @@ export class PreClient {
       key = key || generatedKeys.key;
     }
 
+    console.log("symmetric key", key);
+
     if (!nonce) {
       nonce = getCrypto().getRandomValues(new Uint8Array(12));
     }
@@ -103,6 +105,8 @@ export class PreClient {
       secretKey
     );
 
+    console.log("here is symmetric key", symmetricKey);
+
     let decryptedMessage = await decryptAESGCM(
       payload.encryptedMessage,
       symmetricKey
@@ -124,6 +128,7 @@ export class PreClient {
     // );
     // console.log("bob secret key", secretKey.second);
     // console.log("order", order);
+    console.log("first", encryptedKey.first);
     const temp = BN254CurveWrapper.gtPow(
       encryptedKey.first,
       bigintModArith.modInv(secretKey.second, order)
