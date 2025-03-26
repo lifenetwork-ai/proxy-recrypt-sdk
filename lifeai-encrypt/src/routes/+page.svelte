@@ -1278,7 +1278,7 @@
     .small-image img {
         max-width: 100%;
         height: auto;
-        width: 150px;
+        width: 600px;
     }
 
     .encrypted-preview {
