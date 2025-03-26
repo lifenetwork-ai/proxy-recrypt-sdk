@@ -21,6 +21,10 @@
   let reEncryptionKey: pre.G2Point | null = null;
   let proxyStoreId: string | null = null;
   let decryptedImage: string | null = null;
+  let userBSecretKey: SecretKey | null = null;
+  let userBPublicKey: any | null = null;
+  let reEncryptedData: any | null = null;
+  let proxyRequestStatus: string | null = null;
 
   // Fixed B secret for testing purpose
   let secretB: SecretKey = new SecretKey(66666666n, 88888888n);
@@ -213,6 +217,18 @@
     }
   }
 
+  async function generateUserBKeys() {
+    try {
+      // For demo purposes, using fixed values
+      userBSecretKey = new SecretKey(66666666n, 88888888n);
+      userBPublicKey = client.preClient.secretToPubkey(userBSecretKey);
+      return true;
+    } catch (error: any) {
+      errorMessage = "Error generating User B keys: " + error.message;
+      return false;
+    }
+  }
+
   async function handleDecryptAsB() {
     try {
       if (!proxyStoreId) {
@@ -220,14 +236,21 @@
         return;
       }
 
+      if (!userBSecretKey) {
+        const success = await generateUserBKeys();
+        if (!success) return;
+      }
+
+      proxyRequestStatus = "Requesting data from proxy server...";
       const proxyClient = new pre.ProxyClient();
 
       // Request re-encrypted data from proxy
       const { firstLevelKey, encryptedData } =
         await proxyClient.request(proxyStoreId);
+      proxyRequestStatus = "Data received from proxy server";
+      reEncryptedData = { firstLevelKey, encryptedData };
 
       // Decrypt the data using Bob's secret key
-      console.log(encryptedData.slice(0, 10));
       const decryptedData = await client.preClient.decryptFirstLevel(
         {
           encryptedKey: firstLevelKey,
@@ -237,7 +260,7 @@
             )
           ),
         },
-        secretB
+        userBSecretKey!
       );
 
       // Create a blob from the decrypted data
@@ -250,6 +273,7 @@
       console.error("Error decrypting data:", error);
       errorMessage = "Error decrypting data: " + error.message;
       decryptionDetails = null;
+      proxyRequestStatus = null;
     }
   }
 
@@ -632,20 +656,85 @@
       <div class="process-flow">
         <div class="flow-step">
           <span class="step-number">1</span>
-          <span>Request re-encrypted data</span>
+          <span>Generate User B Keys</span>
         </div>
         <div class="flow-arrow">→</div>
         <div class="flow-step">
           <span class="step-number">2</span>
+          <span>Request re-encrypted data</span>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step">
+          <span class="step-number">3</span>
           <span>Decrypt with User B's key</span>
         </div>
       </div>
 
-      <button on:click={handleDecryptAsB}>Decrypt as User B</button>
+      <div class="decryption-status">
+        <!-- User B Key Status -->
+        {#if userBSecretKey}
+          <div class="status-item success">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path
+                d="M12 2a10 10 0 0 1 10 10a10 10 0 0 1-10 10A10 10 0 0 1 2 12A10 10 0 0 1 12 2z"
+              />
+              <path d="M9 12l2 2l4-4" />
+            </svg>
+            <span>User B Keys Generated (Local)</span>
+          </div>
+        {/if}
 
-      {#if decryptionDetails}
-        <p class="decryption-details">{decryptionDetails}</p>
-      {/if}
+        <!-- Proxy Request Status -->
+        {#if proxyRequestStatus}
+          <div class="status-item info">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <circle cx="12" cy="12" r="10" />
+              <path d="M12 16v-4" />
+              <path d="M12 8h.01" />
+            </svg>
+            <span>{proxyRequestStatus}</span>
+          </div>
+        {/if}
+
+        <!-- Decryption Status -->
+        {#if decryptionDetails}
+          <div class="status-item success">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path
+                d="M12 2a10 10 0 0 1 10 10a10 10 0 0 1-10 10A10 10 0 0 1 2 12A10 10 0 0 1 12 2z"
+              />
+              <path d="M9 12l2 2l4-4" />
+            </svg>
+            <span>{decryptionDetails}</span>
+          </div>
+        {/if}
+      </div>
+
+      <button on:click={handleDecryptAsB}>Start Decryption Process</button>
 
       {#if decryptedImage}
         <div class="image-preview small-image">
@@ -660,14 +749,12 @@
               fill="none"
               stroke="currentColor"
               stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
             >
-              <circle cx="12" cy="12" r="10"></circle>
-              <line x1="12" y1="8" x2="12" y2="16"></line>
-              <line x1="8" y1="12" x2="16" y2="12"></line>
+              <circle cx="12" cy="12" r="10" />
+              <path d="M12 16v-4" />
+              <path d="M12 8h.01" />
             </svg>
-            <span>Decrypted in browser as User B</span>
+            <span>Decrypted in browser using User B's key</span>
           </div>
         </div>
       {/if}
@@ -1060,5 +1147,36 @@
     margin-top: 1rem;
     font-size: 0.9rem;
     color: #666;
+  }
+
+  .decryption-status {
+    margin: 1rem 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .status-item {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem;
+    border-radius: 4px;
+    font-size: 0.9rem;
+  }
+
+  .status-item svg {
+    margin-right: 0.5rem;
+  }
+
+  .status-item.success {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+    border: 1px solid #c8e6c9;
+  }
+
+  .status-item.info {
+    background-color: #e3f2fd;
+    color: #1976d2;
+    border: 1px solid #bbdefb;
   }
 </style>
