@@ -51,14 +51,6 @@ var (
 	proxyService = pre.NewProxy()
 )
 
-func arrayToBytes(arr []int) []byte {
-	bytes := make([]byte, len(arr))
-	for i, v := range arr {
-		bytes[i] = byte(v)
-	}
-	return bytes
-}
-
 func main() {
 	r := gin.Default()
 
