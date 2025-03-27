@@ -1,4 +1,4 @@
-# Human Network Crypto Library
+# Crypto Library
 
 A TypeScript SDK for Proxy Re-Encryption (PRE) and cryptographic primitives, enabling secure data sharing directly in the browser.
 
