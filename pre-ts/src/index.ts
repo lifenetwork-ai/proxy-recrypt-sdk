@@ -214,15 +214,12 @@ export class ProxyClient {
     getUploadedFile: (fileID: string) => `/file-object/${fileID}`,
   }
 
-  // TODO: fix hardcoded organization ID
-  // This should be passed in the constructor or set via a method
-  // to avoid hardcoding it in the class
   private headers = {
-    "X-Organization-Id": "5030a202-d52f-4a51-8d53-f776974f52ee",
+    "X-Organization-Id": "",
     "Authorization": "",
   }
 
-  constructor(baseUrl: string = "http://localhost:8080", organizationId: string = "5030a202-d52f-4a51-8d53-f776974f52ee", authToken: string = "") {
+  constructor(baseUrl: string = "http://localhost:8080", organizationId: string = "", authToken: string = "") {
     this.baseUrl = baseUrl;
     this.headers["X-Organization-Id"] = organizationId;
     if (authToken) {
@@ -433,39 +430,6 @@ export class ProxyClient {
   }
 }
 
-// Example usage:
-/*
-const client = new ProxyClient();
-
-// Assuming you have these values from your PRE operations:
-const reencryptionKey: G2Point = ...;
-const encryptedKey: SecondLevelSymmetricKey = {
-  first: ..., // G1Point
-  second: ..., // GTElement
-};
-const encryptedData = new Uint8Array([...]); // Your encrypted data
-const userId = "user123";
-
-try {
-  const storeResult = await client.store(
-    reencryptionKey,
-    encryptedKey,
-    encryptedData,
-    userId
-  );
-  console.log('Store successful:', storeResult);
-
-  // Request re-encrypted data
-  const { firstLevelKey, encryptedData } = await client.request(storeResult.id);
-  console.log('Re-encryption successful');
-  
-  // firstLevelKey is now a FirstLevelSymmetricKey object that can be used
-  // to decrypt the encryptedData
-} catch (error) {
-  console.error('Error:', error);
-}
-*/
-
 export type {
   KeyPair,
   PublicKey,
@@ -474,9 +438,6 @@ export type {
   FirstLevelEncryptionResponse,
   SecondLevelEncryptionResponse,
 } from "./types";
-
 export * from "./crypto";
-
 export * from "./shamir";
-
 export * from "./utils";
