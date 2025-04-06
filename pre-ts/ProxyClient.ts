@@ -1,4 +1,4 @@
-import { G2Point, GTElement, G1Point, BN254CurveWrapper } from './src/crypto/bn254';
+import { G2Point, BN254CurveWrapper } from './src/crypto/bn254';
 import { SecondLevelSymmetricKey, FirstLevelSymmetricKey } from './src/types';
 
 // Helper functions for Uint8Array serialization

@@ -66,6 +66,7 @@ export async function encryptAESGCM(
  * @returns Decrypted data
  * @throws Error if ciphertext is too short or decryption fails
  */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export async function decryptAESGCM(
   encrypted: Uint8Array,
   key: Uint8Array

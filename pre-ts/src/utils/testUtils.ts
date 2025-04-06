@@ -1,5 +1,5 @@
 import fs from "fs";
-import { BN254CurveWrapper, G1Point, G2Point } from "../crypto/bn254";
+import { BN254CurveWrapper, G2Point } from "../crypto/bn254";
 import { base64BufferToBigInt } from "./index";
 import { GTElement } from "../crypto/bn254";
 import { KeyPair, SecretKey } from "../types";
@@ -65,7 +65,7 @@ export async function loadKeyPairFromFile(filename: string): Promise<KeyPair> {
 export async function loadReKeyFromFile(filename: string): Promise<G2Point> {
   // Read file
   try {
-    let jsonData = await fs.readFileSync(filename, "utf8");
+    const jsonData = await fs.readFileSync(filename, "utf8");
     return BN254CurveWrapper.G2FromBytes(Buffer.from(jsonData, "base64"));
   } catch (err) {
     throw new Error(`Failed to read rekey file: ${err}`);

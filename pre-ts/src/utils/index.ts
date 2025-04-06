@@ -1,9 +1,8 @@
 export * from "./bytes";
 export * from "./keypair";
 import { BN254CurveWrapper, G2Point, GTElement } from "../crypto";
-import { KeyPair, PublicKey, SecretKey } from "../types";
+import {PublicKey, SecretKey } from "../types";
 import { Fp, Fp12, Fp6, Fp2 } from "@noble/curves/abstract/tower";
-import fs from "fs";
 import { Buffer } from "buffer";
 import { IField } from "@noble/curves/abstract/modular";
 
@@ -50,7 +49,7 @@ export function g2FromBytes(bytes: Uint8Array): { x: Fp2; y: Fp2 } {
 }
 
 export function bytesToBigInt(bytes: Uint8Array): bigint {
-  let hex = Array.from(bytes)
+  const hex = Array.from(bytes)
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
   return BigInt("0x" + hex);

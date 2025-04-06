@@ -28,6 +28,8 @@
     let generatedSecretKeyDisplay: string | null = null;
     let encryptPassphrase: string = "";
     let passphraseError: string | null = null;
+    let reconstructionSteps: Array<string> = [];
+    let decryptionSteps: Array<string> = [];
 
     // Fixed B secret for testing purpose
     let secretB: SecretKey = new SecretKey(66666666n, 88888888n);
@@ -114,14 +116,12 @@
         }
     }
 
-    // Simple function to hash the passphrase (in a real app, use a proper crypto hash)
     function hashPassphrase(phrase: string): string {
-        // This is a placeholder - in a real app, use a proper crypto hash function
         let hash = 0;
         for (let i = 0; i < phrase.length; i++) {
             const char = phrase.charCodeAt(i);
             hash = (hash << 5) - hash + char;
-            hash = hash & hash; // Convert to 32bit integer
+            hash = hash & hash;
         }
         return hash.toString(16);
     }
@@ -144,32 +144,38 @@
         }
     }
 
+    async function delay(ms: number) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
     async function handleEncrypt() {
         if (selectedFile) {
             try {
+                reconstructionSteps = []; // Clear previous steps
                 passphraseError = null;
-                reconstructionStatus = "Retrieving stored key shares...";
+                
+                reconstructionSteps = [...reconstructionSteps, "Retrieving key share 1 from storage..."];
                 const share1 = getShareFromLocalStorage("encryptionShare1");
+                await delay(1500); // 1.5 second delay
+                
+                reconstructionSteps = [...reconstructionSteps, "Retrieving key share 2 from storage..."];
                 const share2 = getShareFromLocalStorage("encryptionShare2");
+                await delay(1200); // 1.2 second delay
 
                 if (!share1 || !share2) {
                     throw new Error("Required key shares not found in storage");
                 }
 
-                // Decrypt shares if passphrase was used
                 let share1Array: Uint8Array;
                 let share2Array: Uint8Array;
 
                 if (share1.hasPassphrase) {
+                    reconstructionSteps = [...reconstructionSteps, "Decrypting key share 1 with passphrase..."];
                     if (!encryptPassphrase) {
-                        passphraseError =
-                            "Please enter the passphrase used during key generation";
+                        passphraseError = "Please enter the passphrase used during key generation";
                         throw new Error(passphraseError);
                     }
-                    if (
-                        hashPassphrase(encryptPassphrase) !==
-                        share1.passphraseHash
-                    ) {
+                    if (hashPassphrase(encryptPassphrase) !== share1.passphraseHash) {
                         passphraseError = "Incorrect passphrase";
                         throw new Error(passphraseError);
                     }
@@ -178,26 +184,32 @@
                         new Uint8Array(share1.share).buffer,
                         encryptPassphrase
                     );
+                    await delay(800);
+                    
+                    reconstructionSteps = [...reconstructionSteps, "Decrypting key share 2 with passphrase..."];
                     share2Array = await decryptShare(
                         new Uint8Array(share2.share).buffer,
                         encryptPassphrase
                     );
+                    await delay(1000);
                 } else {
+                    reconstructionSteps = [...reconstructionSteps, "Processing unencrypted key shares..."];
                     share1Array = new Uint8Array(share1.share);
                     share2Array = new Uint8Array(share2.share);
+                    await delay(1000);
                 }
 
-                reconstructionStatus = "Reconstructing secret from shares...";
-                const secretBytes = await pre.combineSecret([
-                    share1Array,
-                    share2Array,
-                ]);
+                reconstructionSteps = [...reconstructionSteps, "Reconstructing secret key from shares..."];
+                await delay(1500);
+                const secretBytes = await pre.combineSecret([share1Array, share2Array]);
 
-                reconstructionStatus = "Generating secret key...";
+                reconstructionSteps = [...reconstructionSteps, "Generating secret key..."];
+                await delay(800);
                 const secret = SecretKey.fromBytes(secretBytes);
                 secretKeyDisplay = `Secret Key: (${secret.first}, ${secret.second})`;
 
-                reconstructionStatus = "Encrypting data with secret key...";
+                reconstructionSteps = [...reconstructionSteps, "Encrypting data with secret key..."];
+                await delay(2000);
                 secondLevelEncrypted = await client.encryptData(
                     secret,
                     new Uint8Array(await selectedFile.arrayBuffer())
@@ -216,7 +228,7 @@
                     pubB.second
                 );
 
-                reconstructionStatus = "Encryption complete!";
+                reconstructionSteps = [...reconstructionSteps, "Encryption complete!"];
 
                 console.log(
                     btoa(
@@ -262,7 +274,6 @@
 
     async function generateUserBKeys() {
         try {
-            // For demo purposes, using fixed values
             userBSecretKey = new SecretKey(66666666n, 88888888n);
             userBPublicKey = client.preClient.secretToPubkey(userBSecretKey);
             return true;
@@ -274,27 +285,34 @@
 
     async function handleDecryptAsB() {
         try {
+            decryptionSteps = []; 
+            
             if (!proxyStoreId) {
-                errorMessage =
-                    "No proxy store ID available. Please store data first.";
+                errorMessage = "No proxy store ID available. Please store data first.";
                 return;
             }
 
             if (!userBSecretKey) {
+                decryptionSteps = [...decryptionSteps, "Generating User B keys..."];
+                await delay(1000);
                 const success = await generateUserBKeys();
                 if (!success) return;
             }
 
-            proxyRequestStatus = "Requesting data from proxy server...";
+            decryptionSteps = [...decryptionSteps, "Connecting to proxy server..."];
+            await delay(800);
             const proxyClient = new pre.ProxyClient();
 
-            // Request re-encrypted data from proxy
-            const { firstLevelKey, encryptedData } =
-                await proxyClient.request(proxyStoreId);
-            proxyRequestStatus = "Data received from proxy server";
+            decryptionSteps = [...decryptionSteps, "Requesting re-encrypted data from proxy..."];
+            await delay(1500);
+            const { firstLevelKey, encryptedData } = await proxyClient.request(proxyStoreId);
+            
+            decryptionSteps = [...decryptionSteps, "Processing received data..."];
+            await delay(1000);
             reEncryptedData = { firstLevelKey, encryptedData };
 
-            // Decrypt the data using Bob's secret key
+            decryptionSteps = [...decryptionSteps, "Decrypting data with User B's secret key..."];
+            await delay(2000);
             const decryptedData = await client.preClient.decryptFirstLevel(
                 {
                     encryptedKey: firstLevelKey,
@@ -307,17 +325,18 @@
                 userBSecretKey!
             );
 
-            // Create a blob from the decrypted data
+            decryptionSteps = [...decryptionSteps, "Creating decrypted image..."];
+            await delay(800);
             const blob = new Blob([decryptedData], { type: "image/jpeg" });
             decryptedImage = URL.createObjectURL(blob);
 
+            decryptionSteps = [...decryptionSteps, "Decryption complete!"];
             decryptionDetails = "Successfully decrypted the image as user B";
             errorMessage = null;
         } catch (error: any) {
             console.error("Error decrypting data:", error);
             errorMessage = "Error decrypting data: " + error.message;
             decryptionDetails = null;
-            proxyRequestStatus = null;
         }
     }
 
@@ -346,8 +365,8 @@
     }
 
     function downloadEncryptedData() {
-        if (encryptedMessage && browser) {
-            const blob = new Blob([encryptedMessage], {
+        if (secondLevelEncrypted && browser) {
+            const blob = new Blob([secondLevelEncrypted.encryptedMessage], {
                 type: "application/octet-stream",
             });
             const url = URL.createObjectURL(blob);
@@ -357,6 +376,7 @@
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
+            URL.revokeObjectURL(url); 
         }
     }
 
@@ -752,24 +772,31 @@
             {/if}
             <button on:click={handleEncrypt}>Encrypt Image</button>
 
-            {#if reconstructionStatus}
-                <div class="reconstruction-status">
-                    <div class="status-item info">
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="16"
-                            height="16"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="2"
-                        >
-                            <circle cx="12" cy="12" r="10" />
-                            <path d="M12 16v-4" />
-                            <path d="M12 8h.01" />
-                        </svg>
-                        <span>{reconstructionStatus}</span>
-                    </div>
+            {#if reconstructionSteps.length > 0}
+                <div class="reconstruction-steps">
+                    {#each reconstructionSteps as step, i}
+                        <div class="status-item info {i === reconstructionSteps.length - 1 ? 'current' : 'completed'}">
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="16"
+                                height="16"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                            >
+                                {#if i === reconstructionSteps.length - 1}
+                                    <!-- Loading spinner for current step -->
+                                    <circle cx="12" cy="12" r="10" class="spinner" />
+                                {:else}
+                                    <!-- Checkmark for completed steps -->
+                                    <path d="M12 2a10 10 0 0 1 10 10a10 10 0 0 1-10 10A10 10 0 0 1 2 12A10 10 0 0 1 12 2z" />
+                                    <path d="M9 12l2 2l4-4" />
+                                {/if}
+                            </svg>
+                            <span>{step}</span>
+                        </div>
+                    {/each}
                 </div>
             {/if}
 
@@ -842,6 +869,7 @@
                                 <button
                                     class="download-btn"
                                     on:click={downloadEncryptedData}
+                                    disabled={!secondLevelEncrypted}
                                 >
                                     <svg
                                         xmlns="http://www.w3.org/2000/svg"
@@ -954,6 +982,34 @@
             </div>
 
             <div class="decryption-status">
+                {#if decryptionSteps.length > 0}
+                    <div class="reconstruction-steps">
+                        {#each decryptionSteps as step, i}
+                            <div class="status-item info {i === decryptionSteps.length - 1 ? 'current' : 'completed'}">
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="16"
+                                    height="16"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                >
+                                    {#if i === decryptionSteps.length - 1}
+                                        <!-- Loading spinner for current step -->
+                                        <circle cx="12" cy="12" r="10" class="spinner" />
+                                    {:else}
+                                        <!-- Checkmark for completed steps -->
+                                        <path d="M12 2a10 10 0 0 1 10 10a10 10 0 0 1-10 10A10 10 0 0 1 2 12A10 10 0 0 1 12 2z" />
+                                        <path d="M9 12l2 2l4-4" />
+                                    {/if}
+                                </svg>
+                                <span>{step}</span>
+                            </div>
+                        {/each}
+                    </div>
+                {/if}
+
                 <!-- User B Key Status -->
                 {#if userBSecretKey}
                     <div class="status-item success">
@@ -971,7 +1027,6 @@
                             />
                             <path d="M9 12l2 2l4-4" />
                         </svg>
-                        <span>User B Keys Generated (Local)</span>
                     </div>
                 {/if}
 
@@ -1445,6 +1500,33 @@
         border: 1px solid #bbdefb;
     }
 
+    .status-item.completed {
+        background-color: #e8f5e9;
+        color: #2e7d32;
+        border: 1px solid #c8e6c9;
+    }
+
+    .status-item.completed svg {
+        color: #2e7d32;
+    }
+
+    .status-item.current {
+        background-color: #e3f2fd;
+        color: #1976d2;
+        border: 1px solid #bbdefb;
+        border-left: 4px solid #1976d2;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    .spinner {
+        animation: spin 2s linear infinite;
+        transform-origin: center;
+    }
+
     .reconstruction-status {
         margin: 1rem 0;
     }
@@ -1491,5 +1573,32 @@
     .passphrase-error svg {
         margin-right: 0.5rem;
         color: #dc3545;
+    }
+
+    .reconstruction-steps {
+        margin: 1rem 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .reconstruction-steps .status-item:last-child {
+        background-color: #e8f5e9;
+        color: #2e7d32;
+        border: 1px solid #c8e6c9;
+    }
+
+    .reconstruction-steps .status-item:last-child svg {
+        color: #2e7d32;
+    }
+
+    .download-btn:disabled {
+        background-color: #ccc;
+        cursor: not-allowed;
+        opacity: 0.7;
+    }
+
+    .download-btn:disabled:hover {
+        background-color: #ccc;
     }
 </style>

@@ -1,48 +1,48 @@
 {
-  "type": "module",
-  "name": "pre-ts",
-  "version": "0.1.0",
-  "description": "TypeScript implementation of Proxy Re-Encryption (PRE)",
-  "main": "dist/bundle.js",
-  "types": "dist/index.d.ts",
-  "scripts": {
-    "build": "tsc",
-    "types": "tsc --declaration --emitDeclarationOnly --project tsconfig.build.json",
-    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --config jest.config.mjs",
-    "lint": "eslint src/**/*.ts",
-    "ts-benchmark": "ts-node --esm --experimentalSpecifierResolution node src/scripts/benchmarkUpload.ts"
-  },
-  "engines": {
-    "node": ">=22.0.0"
-  },
-  "dependencies": {
-    "@noble/curves": "^1.8.1",
-    "@peculiar/webcrypto": "^1.5.0",
-    "bigint-mod-arith": "^3.3.1",
-    "bn.js": "^5.2.1",
-    "i": "^0.3.7",
-    "js-crypto-hkdf": "^1.0.7",
-    "npm": "^11.1.0",
-    "shamir-secret-sharing": "^0.0.4"
-  },
-  "devDependencies": {
-    "@jest/globals": "^29.7.0",
-    "@types/jest": "^29.5.14",
-    "@types/node": "^20.17.19",
-    "@types/webpack": "^5.28.5",
-    "@typescript-eslint/eslint-plugin": "^8.24.1",
-    "@typescript-eslint/parser": "^8.24.1",
-    "buffer": "^6.0.3",
-    "crypto-browserify": "^3.12.1",
-    "eslint": "^9.21.0",
-    "eslint-config-airbnb-typescript": "^18.0.0",
-    "eslint-plugin-import": "^2.31.0",
-    "jest": "^29.7.0",
-    "process": "^0.11.10",
-    "stream-browserify": "^3.0.0",
-    "ts-jest": "^29.2.6",
-    "ts-loader": "^9.5.2",
-    "ts-node": "^10.9.2",
-    "typescript": "^5.7.3"
-  }
+    "type": "module",
+    "name": "pre-ts",
+    "version": "0.1.0",
+    "description": "TypeScript implementation of Proxy Re-Encryption (PRE)",
+    "main": "dist/bundle.js",
+    "types": "dist/index.d.ts",
+    "scripts": {
+        "build": "tsc",
+        "types": "tsc --declaration --emitDeclarationOnly --project tsconfig.build.json",
+        "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --config jest.config.mjs",
+        "lint": "eslint",
+        "ts-benchmark": "ts-node --esm --experimentalSpecifierResolution node src/scripts/benchmarkUpload.ts"
+    },
+    "engines": {
+        "node": ">=22.0.0"
+    },
+    "dependencies": {
+        "@noble/curves": "^1.8.1",
+        "@peculiar/webcrypto": "^1.5.0",
+        "bigint-mod-arith": "^3.3.1",
+        "bn.js": "^5.2.1",
+        "i": "^0.3.7",
+        "js-crypto-hkdf": "^1.0.7",
+        "npm": "^11.1.0",
+        "shamir-secret-sharing": "^0.0.4"
+    },
+    "devDependencies": {
+        "@eslint/js": "^9.24.0",
+        "@jest/globals": "^29.7.0",
+        "@types/jest": "^29.5.14",
+        "@types/node": "^20.17.19",
+        "@types/webpack": "^5.28.5",
+        "@typescript-eslint/eslint-plugin": "^8.24.1",
+        "@typescript-eslint/parser": "^8.24.1",
+        "buffer": "^6.0.3",
+        "crypto-browserify": "^3.12.1",
+        "eslint": "^9.24.0",
+        "jest": "^29.7.0",
+        "process": "^0.11.10",
+        "stream-browserify": "^3.0.0",
+        "ts-jest": "^29.2.6",
+        "ts-loader": "^9.5.2",
+        "ts-node": "^10.9.2",
+        "typescript": "^5.8.3",
+        "typescript-eslint": "^8.29.0"
+    }
 }
