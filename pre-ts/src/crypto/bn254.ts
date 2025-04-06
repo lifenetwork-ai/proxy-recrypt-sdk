@@ -1,11 +1,8 @@
-// Core types from the library
 import { bn254 } from "@noble/curves/bn254";
-import { Fp, Fp12, Fp12Bls, Fp2 } from "@noble/curves/abstract/tower";
+import { Fp, Fp12, Fp2 } from "@noble/curves/abstract/tower";
 import {
-  AffinePoint,
   ProjConstructor,
   ProjPointType,
-  weierstrassPoints,
 } from "@noble/curves/abstract/weierstrass";
 import {
   bytesToBigInt,
@@ -87,8 +84,8 @@ export class BN254CurveWrapper {
   }
 
   static G2FromBytes(bytes: Uint8Array): G2Point {
-    let a = g2FromBytes(bytes);
-    let c: ProjConstructor<Fp2> = bn254.G2.ProjectivePoint;
+    const a = g2FromBytes(bytes);
+    const c: ProjConstructor<Fp2> = bn254.G2.ProjectivePoint;
     return c.fromAffine(a);
   }
 

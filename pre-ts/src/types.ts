@@ -83,6 +83,7 @@ export interface FirstLevelSymmetricKey {
   second: GTElement; // Second component in GT group
 }
 
+ /* eslint-disable @typescript-eslint/no-explicit-any */
 export function parseFirstLevelSymmetricKey(data: any): FirstLevelSymmetricKey {
   // Function to convert B0/B1/B2 to c0/c1/c2 and A0/A1 to c0/c1
   // Also converts string values to bigint

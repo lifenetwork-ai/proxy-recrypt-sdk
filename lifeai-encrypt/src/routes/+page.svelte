@@ -30,13 +30,11 @@
     let passphraseError: string | null = null;
     let reconstructionSteps: Array<string> = [];
     let decryptionSteps: Array<string> = [];
-
     let proxyClient =  new pre.ProxyClient(
                     "http://localhost:8080/api/v1/dataowner",
                     "5030a202-d52f-4a51-8d53-f776974f52ee",
                     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJvcmdhbml6YXRpb25faWQiOiI1MDMwYTIwMi1kNTJmLTRhNTEtOGQ1My1mNzc2OTc0ZjUyZWUiLCJ1c2VyX2lkIjoiYjFlNmUzZjEtNzhkYS00ZTYzLTk5MWItNDRiMDY5OTg4YzdhIiwidXNlcl9uYW1lIjoiIiwiZXhwIjoxNzQzNjczNzQwfQ.88YWQd6fdLBaP-ruiOpJ7c2F6CTk1lVJW-9yjrUOShQ",
                 );
-
     // Fixed B secret for testing purpose
     let secretB: SecretKey = new SecretKey(66666666n, 88888888n);
 
@@ -192,7 +190,6 @@
                 await delay(1500); // 1.5 second delay
                 
                 reconstructionSteps = [...reconstructionSteps, "Retrieving key share 2 from storage..."];
-
                 const share2 = getShareFromLocalStorage("encryptionShare2");
                 await delay(1200); // 1.2 second delay
 
@@ -242,7 +239,6 @@
                 } else {
                     reconstructionSteps = [...reconstructionSteps, "Key shares verified successfully!"];
                 }
-                     
                     await delay(1000);
                 }
 
@@ -367,8 +363,6 @@
                 second: secondLevelEncrypted!.encryptedKey!.second
             };
 
-            console.log("abc", arrayBufferToBase64(encryptedData).substring(0,10));
-
             decryptionSteps = [...decryptionSteps, "Decrypting data with User B's secret key..."];
             await delay(2000);
             const decryptedData = await client.preClient.decryptFirstLevel(
@@ -379,8 +373,6 @@
                 },
                 userBSecretKey!
             );
-
-
             decryptionSteps = [...decryptionSteps, "Creating decrypted image..."];
             await delay(800);
             const blob = new Blob([decryptedData], { type: "image/jpeg" });

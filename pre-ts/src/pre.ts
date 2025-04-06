@@ -19,6 +19,9 @@ import { bn254 } from "@noble/curves/bn254";
 import * as bigintModArith from "bigint-mod-arith";
 import { generateRandomSecretKey } from "./utils/keypair";
 
+
+/* eslint-disable @typescript-eslint/no-require-imports */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 function getCrypto() {
   if (typeof window !== "undefined" && window.crypto) {
     // Browser environment
@@ -32,9 +35,9 @@ function getCrypto() {
       }
       const { Crypto } = require("@peculiar/webcrypto");
       return new Crypto();
-    } catch (error) {
+    } catch (error: any) {
       throw new Error(
-        "Crypto support not available. Please install @peculiar/webcrypto package."
+        "Crypto support not available. Please install @peculiar/webcrypto package." + error.message
       );
     }
   }
@@ -123,8 +126,6 @@ export class PreClient {
       key = key || generatedKeys.key;
     }
 
-    console.log("symmetric key", key);
-
     if (!nonce) {
       nonce = getCrypto().getRandomValues(new Uint8Array(12));
     }
@@ -150,14 +151,12 @@ export class PreClient {
     payload: FirstLevelEncryptionResponse,
     secretKey: SecretKey
   ): Promise<Uint8Array> {
-    let symmetricKey = await this.decryptFirstLevelKey(
+    const symmetricKey = await this.decryptFirstLevelKey(
       payload.encryptedKey,
       secretKey
     );
 
-    console.log("here is symmetric key", symmetricKey);
-
-    let decryptedMessage = await decryptAESGCM(
+    const decryptedMessage = await decryptAESGCM(
       payload.encryptedMessage,
       symmetricKey
     );
@@ -171,14 +170,6 @@ export class PreClient {
   ): Promise<Uint8Array> {
     const order = bn254.fields.Fr.ORDER;
 
-    // console.log("scalar", bigintModArith.modInv(secretKey.second, order));
-    // console.log(
-    //   "Encrypted key first",
-    //   BN254CurveWrapper.GTToBytes(encryptedKey.first)
-    // );
-    // console.log("bob secret key", secretKey.second);
-    // console.log("order", order);
-    console.log("first", encryptedKey.first);
     const temp = BN254CurveWrapper.gtPow(
       encryptedKey.first,
       bigintModArith.modInv(secretKey.second, order)
@@ -195,12 +186,12 @@ export class PreClient {
     encryptedMessage: Uint8Array,
     secretKey: SecretKey
   ): Promise<Uint8Array> {
-    let symmetricKey = await this.decryptSecondLevelKey(
+    const symmetricKey = await this.decryptSecondLevelKey(
       encryptedKey,
       secretKey
     );
 
-    let decryptedMessage = await decryptAESGCM(encryptedMessage, symmetricKey);
+    const decryptedMessage = await decryptAESGCM(encryptedMessage, symmetricKey);
 
     return decryptedMessage;
   }
@@ -221,7 +212,6 @@ export class PreClient {
 
   generateRandomKeyPair(): KeyPair {
     const secretKey = generateRandomSecretKey();
-
     const publicKey = this.secretToPubkey(secretKey);
     return { publicKey, secretKey };
   }

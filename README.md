@@ -1,4 +1,4 @@
-# Human Network Crypto Library
+# Crypto Library
 
 A TypeScript SDK for Proxy Re-Encryption (PRE) and cryptographic primitives, enabling secure data sharing directly in the browser.
 
@@ -9,7 +9,7 @@ A TypeScript SDK for Proxy Re-Encryption (PRE) and cryptographic primitives, ena
 This SDK allows users to securely encrypt and share data via a proxy service, without exposing raw data to the proxy. It includes full client-side support for key generation, encryption, and Proxy Re-Encryption (PRE).
 
 This SDK implements the PRE method as detailed in our design spec:
-[Overleaf PRE Design Doc](https://www.overleaf.com/project/67b830bc1bfd7b6dab9affb5)
+[Overleaf PRE Design Doc](https://www.overleaf.com/read/fxqmmczvtxjn#cc8f9b) (Work in progress)
 
 ## Key Features
 
