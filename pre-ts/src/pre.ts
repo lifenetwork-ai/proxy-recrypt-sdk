@@ -73,8 +73,6 @@ export class PreClient {
       key = key || generatedKeys.key;
     }
 
-    console.log("symmetric key", key);
-
     if (!nonce) {
       nonce = getCrypto().getRandomValues(new Uint8Array(12));
     }
@@ -105,8 +103,6 @@ export class PreClient {
       secretKey
     );
 
-    console.log("here is symmetric key", symmetricKey);
-
     let decryptedMessage = await decryptAESGCM(
       payload.encryptedMessage,
       symmetricKey
@@ -121,14 +117,6 @@ export class PreClient {
   ): Promise<Uint8Array> {
     const order = bn254.fields.Fr.ORDER;
 
-    // console.log("scalar", bigintModArith.modInv(secretKey.second, order));
-    // console.log(
-    //   "Encrypted key first",
-    //   BN254CurveWrapper.GTToBytes(encryptedKey.first)
-    // );
-    // console.log("bob secret key", secretKey.second);
-    // console.log("order", order);
-    console.log("first", encryptedKey.first);
     const temp = BN254CurveWrapper.gtPow(
       encryptedKey.first,
       bigintModArith.modInv(secretKey.second, order)
@@ -171,7 +159,6 @@ export class PreClient {
 
   generateRandomKeyPair(): KeyPair {
     const secretKey = generateRandomSecretKey();
-
     const publicKey = this.secretToPubkey(secretKey);
     return { publicKey, secretKey };
   }

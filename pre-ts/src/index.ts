@@ -10,6 +10,7 @@ import {
 import { generateRandomSymmetricKeyFromGT } from "./crypto";
 import { combineSecret, splitSecret } from "./shamir";
 import { generateRandomScalar } from "./utils/keypair";
+
 export interface IPreClient {
   // Generate a random secret key, then split it into n shares
   generateKeys(): Promise<Array<Uint8Array>>;
@@ -229,39 +230,6 @@ export class ProxyClient {
   }
 }
 
-// Example usage:
-/*
-const client = new ProxyClient();
-
-// Assuming you have these values from your PRE operations:
-const reencryptionKey: G2Point = ...;
-const encryptedKey: SecondLevelSymmetricKey = {
-  first: ..., // G1Point
-  second: ..., // GTElement
-};
-const encryptedData = new Uint8Array([...]); // Your encrypted data
-const userId = "user123";
-
-try {
-  const storeResult = await client.store(
-    reencryptionKey,
-    encryptedKey,
-    encryptedData,
-    userId
-  );
-  console.log('Store successful:', storeResult);
-
-  // Request re-encrypted data
-  const { firstLevelKey, encryptedData } = await client.request(storeResult.id);
-  console.log('Re-encryption successful');
-  
-  // firstLevelKey is now a FirstLevelSymmetricKey object that can be used
-  // to decrypt the encryptedData
-} catch (error) {
-  console.error('Error:', error);
-}
-*/
-
 export type {
   KeyPair,
   PublicKey,
@@ -270,9 +238,6 @@ export type {
   FirstLevelEncryptionResponse,
   SecondLevelEncryptionResponse,
 } from "./types";
-
 export * from "./crypto";
-
 export * from "./shamir";
-
 export * from "./utils";

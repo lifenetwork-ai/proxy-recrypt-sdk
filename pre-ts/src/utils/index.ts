@@ -3,7 +3,6 @@ export * from "./keypair";
 import { BN254CurveWrapper, G2Point, GTElement } from "../crypto";
 import { KeyPair, PublicKey, SecretKey } from "../types";
 import { Fp, Fp12, Fp6, Fp2 } from "@noble/curves/abstract/tower";
-import fs from "fs";
 import { Buffer } from "buffer";
 import { IField } from "@noble/curves/abstract/modular";
 
