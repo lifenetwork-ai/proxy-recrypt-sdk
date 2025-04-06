@@ -348,12 +348,19 @@ export class ProxyClient {
      * @param userId The user ID
      * @returns Promise with the store response
      */
-    async storeFile(encryptedData: Uint8Array): Promise<StoreResponse> {
+    async storeFile(
+        encryptedData: Uint8Array,
+        filename?: string
+    ): Promise<StoreResponse> {
         const formDataRequest: FormData = new FormData();
         // Use btoa for base64 encoding of byte arrays
         // formDataRequest.append("file", new Blob([encryptedData]), "file");
 
-        formDataRequest.append("file", new Blob([encryptedData]), "file");
+        formDataRequest.append(
+            "file",
+            new Blob([encryptedData]),
+            filename || Date.now().toString() + "_encrypted_file" + ".enc"
+        );
 
         const response = await fetch(
             `${this.baseUrl}${this.endpoints.uploadFile}`,
