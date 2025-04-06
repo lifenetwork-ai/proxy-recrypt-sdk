@@ -1,4 +1,4 @@
-import { G1Point, G2Point, GTElement } from "./crypto/bn254";
+import { BN254CurveWrapper, G1Point, G2Point, GTElement } from "./crypto/bn254";
 import { bytesToHex, hexToBytes } from "./utils";
 
 export interface KeyPair {
@@ -33,10 +33,49 @@ export class SecretKey {
   }
 }
 
-export interface PublicKey {
+export class PublicKey {
   first: GTElement; // Element in GT group
   second: G2Point; // Point in G2 group
+
+
+  // These are just signatures (declarations without implementation)
+  constructor(params: { first: GTElement; second: G2Point });
+  constructor(first: GTElement, second: G2Point);
+  
+  constructor(firstOrParams: GTElement | { first: GTElement; second: G2Point }, secondParam?: G2Point) {
+    if (firstOrParams && typeof firstOrParams === 'object' && 'first' in firstOrParams) {
+      // Object parameter overload
+      this.first = firstOrParams.first;
+      this.second = firstOrParams.second;
+    } else {
+      // Individual parameters overload
+      this.first = firstOrParams as GTElement;
+      this.second = secondParam as G2Point;
+    }
+  }
+
+
+
+  toBytes(): Uint8Array {
+    // Convert GTElement to bytes
+    const firstBytes = BN254CurveWrapper.GTToBytes(this.first);
+    // Convert G2Point to bytes
+    const secondBytes = BN254CurveWrapper.G2ToBytes(this.second);
+
+    // Concatenate the two byte arrays
+    return new Uint8Array([...firstBytes, ...secondBytes]);
+  }
+
+  static fromBytes(pubkeyBytes: Uint8Array): PublicKey {
+    // Convert bytes back to GTElement and G2Point
+    const first = BN254CurveWrapper.GTFromBytes(pubkeyBytes.slice(0, 96));
+    const second = BN254CurveWrapper.G2FromBytes(pubkeyBytes.slice(96, 224));
+    return new PublicKey(first, second);
+  }
 }
+
+
+
 
 // Cipher text structures
 export interface FirstLevelSymmetricKey {

@@ -31,6 +31,12 @@
     let reconstructionSteps: Array<string> = [];
     let decryptionSteps: Array<string> = [];
 
+    let proxyClient =  new pre.ProxyClient(
+                    "http://localhost:8080/api/v1/dataowner",
+                    "5030a202-d52f-4a51-8d53-f776974f52ee",
+                    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJvcmdhbml6YXRpb25faWQiOiI1MDMwYTIwMi1kNTJmLTRhNTEtOGQ1My1mNzc2OTc0ZjUyZWUiLCJ1c2VyX2lkIjoiYjFlNmUzZjEtNzhkYS00ZTYzLTk5MWItNDRiMDY5OTg4YzdhIiwidXNlcl9uYW1lIjoiIiwiZXhwIjoxNzQzNjczNzQwfQ.88YWQd6fdLBaP-ruiOpJ7c2F6CTk1lVJW-9yjrUOShQ",
+                );
+
     // Fixed B secret for testing purpose
     let secretB: SecretKey = new SecretKey(66666666n, 88888888n);
 
@@ -86,13 +92,13 @@
 
         try {
             const passphraseHash = passphrase
-                ? await hashPassphrase(passphrase)
+                ? hashPassphrase(passphrase)
                 : null;
 
-            for (let i = 0; i < shares.length; i++) {
+                // Only store the first share on local
                 const encryptedShare = passphrase
-                    ? await encryptShare(shares[i], passphrase)
-                    : shares[i].slice().buffer;
+                    ? await encryptShare(shares[0], passphrase)
+                    : shares[0].slice().buffer;
 
                 const shareData: ShareData = {
                     share: encryptedShare,
@@ -101,14 +107,41 @@
                 };
 
                 localStorage.setItem(
-                    `encryptionShare${i + 1}`,
+                    `encryptionShare${1}`,
                     JSON.stringify({
                         ...shareData,
                         share: Array.from(new Uint8Array(shareData.share)), // Convert to array for JSON
                     })
                 );
-            }
 
+
+                // Store the second share to the DAM
+                const encryptedShare2 = passphrase
+                    ? await encryptShare(shares[1], passphrase)
+                    : shares[1].slice().buffer;
+
+                const shareData2: ShareData = {
+                    share: encryptedShare2,
+                    hasPassphrase: passphrase.length > 0,
+                    passphraseHash,
+                };
+
+                const secretBytes = await pre.combineSecret([shares[0], shares[1]]);
+                const secret = SecretKey.fromBytes(secretBytes);
+
+                const pubkeyA = client.preClient.secretToPubkey(secret)
+                await proxyClient.uploadKey(
+                    new Uint8Array(shareData2.share),
+                    pubkeyA,
+                );
+
+                localStorage.setItem(
+                    `encryptionShare${2}`,
+                    JSON.stringify({
+                        ...shareData2,
+                        share: Array.from(new Uint8Array(shareData2.share)), // Convert to array for JSON
+                    })
+                );
             storedShareInfo = `Shares stored with passphrase: ${passphrase.length > 0 ? "Yes" : "No"}`;
             errorMessage = null;
         } catch (error: any) {
@@ -145,7 +178,7 @@
     }
 
     async function delay(ms: number) {
-        return new Promise(resolve => setTimeout(resolve, ms));
+        return new Promise(resolve => setTimeout(resolve, ms / 5));
     }
 
     async function handleEncrypt() {
@@ -159,6 +192,7 @@
                 await delay(1500); // 1.5 second delay
                 
                 reconstructionSteps = [...reconstructionSteps, "Retrieving key share 2 from storage..."];
+
                 const share2 = getShareFromLocalStorage("encryptionShare2");
                 await delay(1200); // 1.2 second delay
 
@@ -196,6 +230,19 @@
                     reconstructionSteps = [...reconstructionSteps, "Processing unencrypted key shares..."];
                     share1Array = new Uint8Array(share1.share);
                     share2Array = new Uint8Array(share2.share);
+
+                const share2FromProxy = await proxyClient.getKeyShare()
+
+                if (new Uint8Array(share2.share).toString() !== new Uint8Array(share2FromProxy).toString()) {
+                    reconstructionSteps = [...reconstructionSteps, "Key share 2 mismatch!"];
+                    console.error("Key share 2 mismatch!");
+                    console.log("storage share 2", new Uint8Array(share2.share).toString());
+                    console.log("proxy share 2", new Uint8Array(share2FromProxy).toString());
+                    throw new Error("Key share 2 mismatch!");
+                } else {
+                    reconstructionSteps = [...reconstructionSteps, "Key shares verified successfully!"];
+                }
+                     
                     await delay(1000);
                 }
 
@@ -247,12 +294,8 @@
 
     async function sendToProxy() {
         try {
-            const proxyClient = new pre.ProxyClient();
-            const response = await proxyClient.store(
-                reEncryptionKey!,
-                secondLevelEncrypted!.encryptedKey,
+            const response = await proxyClient.storeFile(
                 secondLevelEncrypted!.encryptedMessage,
-                "alice"
             );
 
             if (response.id) {
@@ -301,29 +344,42 @@
 
             decryptionSteps = [...decryptionSteps, "Connecting to proxy server..."];
             await delay(800);
-            const proxyClient = new pre.ProxyClient();
-
             decryptionSteps = [...decryptionSteps, "Requesting re-encrypted data from proxy..."];
             await delay(1500);
-            const { firstLevelKey, encryptedData } = await proxyClient.request(proxyStoreId);
-            
+            const payload = await proxyClient.getStoredFile(proxyStoreId);
+            if (!payload) {
+                errorMessage = "Failed to retrieve data from proxy";
+                return;
+            }
+
+            // download from google cloud storage
+            const response = await fetch(payload.object_url, {
+            });
+
+            console.log("response", response);
+
+            const encryptedData = await response.bytes();
+
             decryptionSteps = [...decryptionSteps, "Processing received data..."];
             await delay(1000);
-            reEncryptedData = { firstLevelKey, encryptedData };
+            const firstLevelKey: pre.FirstLevelSymmetricKey = {
+                first: pre.BN254CurveWrapper.pairing(secondLevelEncrypted!.encryptedKey.first, reEncryptionKey!),
+                second: secondLevelEncrypted!.encryptedKey!.second
+            };
+
+            console.log("abc", arrayBufferToBase64(encryptedData).substring(0,10));
 
             decryptionSteps = [...decryptionSteps, "Decrypting data with User B's secret key..."];
             await delay(2000);
             const decryptedData = await client.preClient.decryptFirstLevel(
                 {
                     encryptedKey: firstLevelKey,
-                    encryptedMessage: new Uint8Array(
-                        [...atob(encryptedData.toString())].map((char) =>
-                            char.charCodeAt(0)
-                        )
-                    ),
+                    encryptedMessage: new Uint8Array(encryptedData),
+                    
                 },
                 userBSecretKey!
             );
+
 
             decryptionSteps = [...decryptionSteps, "Creating decrypted image..."];
             await delay(800);

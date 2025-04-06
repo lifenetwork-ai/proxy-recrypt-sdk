@@ -12,10 +12,10 @@ export function secretToPubkey(
   g: G2Point,
   Z: GTElement
 ): PublicKey {
-  return {
-    first: BN254CurveWrapper.gtPow(Z, secret.first),
-    second: BN254CurveWrapper.g2ScalarMul(g, secret.second),
-  };
+  return new PublicKey(
+     BN254CurveWrapper.gtPow(Z, secret.first),
+     BN254CurveWrapper.g2ScalarMul(g, secret.second),
+  );
 }
 
 export function g2FromBytes(bytes: Uint8Array): { x: Fp2; y: Fp2 } {
