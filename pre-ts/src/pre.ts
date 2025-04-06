@@ -29,12 +29,10 @@ function getCrypto() {
   } else if (typeof global !== "undefined") {
     // Node.js environment
     try {
-      // Node.js v19+ has webcrypto as part of the global crypto
       const nodeCrypto = require("crypto");
       if (nodeCrypto.webcrypto) {
         return nodeCrypto.webcrypto;
       }
-      // Fallback to @peculiar/webcrypto for older Node versions
       const { Crypto } = require("@peculiar/webcrypto");
       return new Crypto();
     } catch (error: any) {
@@ -50,15 +48,67 @@ export class PreClient {
   G1: G1Point;
   G2: G2Point;
   Z: GTElement;
+  allowedFileTypes: string[] = [
+    "image/png",
+    "image/jpeg", 
+    "image/jpg",
+    "image/gif",
+    "image/webp",
+    "image/bmp",
+    "image/tiff"
+  ]
 
-  constructor() {
+  magicNumbers = new Map<string, Uint8Array>([
+    ["image/png", new Uint8Array([0x89, 0x50, 0x4E, 0x47])],
+    ["image/jpeg", new Uint8Array([0xFF, 0xD8, 0xFF])],
+    ["image/jpg", new Uint8Array([0xFF, 0xD8, 0xFF])],
+    ["image/gif", new Uint8Array([0x47, 0x49, 0x46])],
+    ["image/webp", new Uint8Array([0x52, 0x49, 0x46, 0x46])],
+    ["image/bmp", new Uint8Array([0x42, 0x4D])],
+    ["image/tiff", new Uint8Array([0x49, 0x49])]
+  ])
+
+  /* Constructor
+  // @param allowedFileTypes - Array of allowed file types for encryption - Default to most common image types: 
+  // png, jpeg, jpg, gif, webp, bmp, tiff
+  */
+  // @returns {PreClient} - Instance of PreClient
+  constructor(allowedFileTypes?: string[]) {
     this.G1 = BN254CurveWrapper.G1Generator();
     this.G2 = BN254CurveWrapper.G2Generator();
     this.Z = BN254CurveWrapper.pairing(this.G1, this.G2);
+
+    if (allowedFileTypes) {
+      this.allowedFileTypes = allowedFileTypes;
+    }
   }
 
   generateReEncryptionKey(secretA: bigint, publicB: G2Point): G2Point {
     return BN254CurveWrapper.g2ScalarMul(publicB, secretA);
+  }
+
+  async validate(message: Uint8Array) {
+    // Validate magic number
+    const fileType = message.slice(0, 4);
+    const isValidType = this.allowedFileTypes.some((type) => {
+      const magicNumber = this.magicNumbers.get(type);
+      return (
+        magicNumber &&
+        fileType.slice(0, magicNumber.length).every(
+          (byte, index) => byte === magicNumber[index]
+        )
+      );
+    });
+    if (!isValidType) {
+      throw new Error("Invalid file type");
+    }
+
+    // Validate size
+    const maxSize = 10 * 1024 * 1024; // 10 MB
+    if (message.length > maxSize) {
+      throw new Error("File size exceeds 10 MB");
+    }
+
   }
 
   async secondLevelEncryption(
