@@ -23,15 +23,15 @@ This SDK implements the PRE method as detailed in our design spec:
 ## Installation
 
 ```bash
-npm install human-network-pre
+npm install pre-ts
 # or
-yarn add human-network-pre
+yarn add pre-ts
 ```
 
 ## Quick Start
 
 ```ts
-import { PreSdk, SecretKey } from "human-network-pre";
+import { PreSdk, SecretKey } from "pre-ts";
 
 const client = new PreSdk();
 const shares = await client.generateKeys();
