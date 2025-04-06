@@ -4,7 +4,7 @@ import { BN254CurveWrapper } from "./bn254";
 
 describe("Bn254 wrapper", () => {
   test("pow", async () => {
-    let Z = BN254CurveWrapper.pairing(
+    const Z = BN254CurveWrapper.pairing(
       BN254CurveWrapper.G1Generator(),
       BN254CurveWrapper.G2Generator()
     );

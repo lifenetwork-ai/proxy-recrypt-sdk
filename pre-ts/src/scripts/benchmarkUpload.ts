@@ -2,7 +2,6 @@ import fs from "fs";
 import path from "path";
 import crypto from "crypto";
 import {
-  BN254CurveWrapper,
   generateRandomSymmetricKeyFromGT,
 } from "../crypto/index";
 import { combineSecret, splitSecret } from "../shamir/index";
@@ -10,7 +9,6 @@ import { PreClient } from "../pre";
 import {
   loadAliceKeyPair,
   loadRandomScalar,
-  loadSymmetricKey,
 } from "../utils/testUtils";
 
 /**
@@ -139,10 +137,10 @@ const runBenchmarks = async () => {
     const keypair = await loadAliceKeyPair();
     const scalar = await loadRandomScalar();
     // Step 3: Combine subset of shares to reconstruct secret
-    const combinedSecret = await runBenchmark(
+    await runBenchmark(
       "Secret Reconstruction",
       async () => {
-        return combineSecret(new Array(sharesArray[0], sharesArray[1]));
+        return combineSecret([sharesArray[0], sharesArray[1]]);
       }
     );
 
@@ -202,7 +200,7 @@ const runBenchmarks = async () => {
     "-------------- | ------------------- | ------------ | -------------------- | -----------------"
   );
 
-  Object.entries(results).forEach(([fileName, result]) => {
+  Object.entries(results).forEach(([, result]) => {
     const fileSizeKB = result.fileSize / 1024;
     const encryptedSizeKB = result.encryptedSize / 1024;
     const throughput = fileSizeKB / (result.encryptionTime / 1000);

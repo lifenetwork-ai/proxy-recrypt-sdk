@@ -19,6 +19,9 @@ import { bn254 } from "@noble/curves/bn254";
 import * as bigintModArith from "bigint-mod-arith";
 import { generateRandomSecretKey } from "./utils/keypair";
 
+
+/* eslint-disable @typescript-eslint/no-require-imports */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 function getCrypto() {
   if (typeof window !== "undefined" && window.crypto) {
     // Browser environment
@@ -34,9 +37,9 @@ function getCrypto() {
       // Fallback to @peculiar/webcrypto for older Node versions
       const { Crypto } = require("@peculiar/webcrypto");
       return new Crypto();
-    } catch (error) {
+    } catch (error: any) {
       throw new Error(
-        "Crypto support not available. Please install @peculiar/webcrypto package."
+        "Crypto support not available. Please install @peculiar/webcrypto package." + error.message
       );
     }
   }
@@ -98,12 +101,12 @@ export class PreClient {
     payload: FirstLevelEncryptionResponse,
     secretKey: SecretKey
   ): Promise<Uint8Array> {
-    let symmetricKey = await this.decryptFirstLevelKey(
+    const symmetricKey = await this.decryptFirstLevelKey(
       payload.encryptedKey,
       secretKey
     );
 
-    let decryptedMessage = await decryptAESGCM(
+    const decryptedMessage = await decryptAESGCM(
       payload.encryptedMessage,
       symmetricKey
     );
@@ -133,12 +136,12 @@ export class PreClient {
     encryptedMessage: Uint8Array,
     secretKey: SecretKey
   ): Promise<Uint8Array> {
-    let symmetricKey = await this.decryptSecondLevelKey(
+    const symmetricKey = await this.decryptSecondLevelKey(
       encryptedKey,
       secretKey
     );
 
-    let decryptedMessage = await decryptAESGCM(encryptedMessage, symmetricKey);
+    const decryptedMessage = await decryptAESGCM(encryptedMessage, symmetricKey);
 
     return decryptedMessage;
   }

@@ -1,6 +1,5 @@
 import { stringToBytes } from "../utils";
 import { BN254CurveWrapper, GTElement } from "./bn254";
-import { Crypto } from "@peculiar/webcrypto";
 import hkdf from "js-crypto-hkdf";
 
 // Default key size for symmetric encryption

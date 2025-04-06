@@ -7,9 +7,10 @@ import {
   parseFirstLevelSymmetricKey,
 } from "./types";
 
-import { generateRandomSymmetricKeyFromGT } from "./crypto";
-import { combineSecret, splitSecret } from "./shamir";
+import {splitSecret } from "./shamir";
 import { generateRandomScalar } from "./utils/keypair";
+import { G2Point, GTElement, BN254CurveWrapper } from "./crypto/bn254";
+import { SecondLevelSymmetricKey } from "./types";
 
 export interface IPreClient {
   // Generate a random secret key, then split it into n shares
@@ -86,8 +87,6 @@ export class PreSdk implements IPreClient {
   }
 }
 
-import { G2Point, GTElement, G1Point, BN254CurveWrapper } from "./crypto/bn254";
-import { SecondLevelSymmetricKey } from "./types";
 
 // Types for the PRE server interactions
 export interface StoredData {

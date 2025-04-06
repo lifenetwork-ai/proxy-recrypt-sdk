@@ -1,9 +1,17 @@
-export default [
+import eslint from "@eslint/js";
+import tseslint from "typescript-eslint";
+
+export default tseslint.config(
+    eslint.configs.recommended,
+    tseslint.configs.recommended,
     {
-        rules: {
-            semi: "error",
-            "prefer-const": "error"
-        },
-        ignores: [".config/", "dist/", "tsconfig.json", "*.config.*"]
+        ignores: [
+            "**/node_modules/**",
+            "**/dist/**",
+            "**/build/**",
+            "**/coverage/**",
+            "**/scripts/**",
+            "**/*.test.ts",
+        ],
     }
-];
+);
