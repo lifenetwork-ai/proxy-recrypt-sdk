@@ -183,7 +183,7 @@ export interface GetStoredFileResponse {
     size: number;
     mime_type: string;
     object_url: string;
-    owner_id: string;
+    // owner_id: string;
     // crypto_info: {
     //   id: string;
     //   type: string;
@@ -200,7 +200,7 @@ export interface GetStoredFileResponse {
 
 export interface GetStoredFilesResponse {
     payload: {
-        data: Array<string>;
+        data: Array<GetStoredFileResponse>;
         next_page: number;
         page: number;
         size: number;
@@ -404,7 +404,6 @@ export class ProxyClient {
             object_url: result.object_url,
             created_at: result.created_at,
             updated_at: result.updated_at,
-            owner_id: result.owner_id,
         };
     }
 
