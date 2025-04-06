@@ -183,7 +183,7 @@ export interface GetStoredFileResponse {
     size: number;
     mime_type: string;
     object_url: string;
-    // owner_id: string;
+    owner_id: string;
     // crypto_info: {
     //   id: string;
     //   type: string;
@@ -196,6 +196,16 @@ export interface GetStoredFileResponse {
     // };
     created_at: string;
     updated_at: string;
+}
+
+export interface GetStoredFilesResponse {
+    payload: {
+        data: Array<string>;
+        next_page: number;
+        page: number;
+        size: number;
+    };
+    success: boolean;
 }
 
 export class ProxyClient {
@@ -394,13 +404,11 @@ export class ProxyClient {
             object_url: result.object_url,
             created_at: result.created_at,
             updated_at: result.updated_at,
+            owner_id: result.owner_id,
         };
     }
 
-    async getStoredFiles(
-        page?: number,
-        size?: number
-    ): Promise<Array<GetStoredFileResponse>> {
+    async getStoredFiles(page?: number, size?: number) {
         const response = await fetch(
             `${this.baseUrl}${this.endpoints.getUploadedFiles}?page=${page}&size=${size}`,
             {
@@ -416,8 +424,12 @@ export class ProxyClient {
             throw new Error(`Get stored files request failed: ${error.error}`);
         }
 
-        const result: Array<GetStoredFileResponse> = await response.json();
-        return result;
+        const result: GetStoredFilesResponse = await response.json();
+        if (!result.success) {
+            throw new Error("Failed to fetch stored files");
+        }
+
+        return result.payload;
     }
 
     /**
