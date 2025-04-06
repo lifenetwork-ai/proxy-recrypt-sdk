@@ -29,6 +29,9 @@ importers:
       npm:
         specifier: ^11.1.0
         version: 11.2.0
+      pre-ts:
+        specifier: 'link:'
+        version: 'link:'
       shamir-secret-sharing:
         specifier: ^0.0.4
         version: 0.0.4
