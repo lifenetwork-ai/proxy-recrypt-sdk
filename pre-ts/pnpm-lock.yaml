@@ -20,6 +20,9 @@ importers:
       js-crypto-hkdf:
         specifier: ^1.0.7
         version: 1.0.7
+      pre-ts:
+        specifier: 'link:'
+        version: 'link:'
       shamir-secret-sharing:
         specifier: ^0.0.4
         version: 0.0.4
