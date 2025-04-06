@@ -2,7 +2,7 @@ import fs from "fs";
 import { BN254CurveWrapper, G2Point } from "../crypto/bn254";
 import { base64BufferToBigInt } from "./index";
 import { GTElement } from "../crypto/bn254";
-import { KeyPair, SecretKey } from "../types";
+import { KeyPair, PublicKey, SecretKey } from "../types";
 
 // Interface for JSON serialization/deserialization
 interface SerializableKeyPair {
@@ -41,7 +41,7 @@ export async function loadKeyPairFromFile(filename: string): Promise<KeyPair> {
 
   // Reconstruct KeyPair
   const keyPair: KeyPair = {
-    publicKey: {
+    publicKey: new PublicKey({
       first: BN254CurveWrapper.GTFromBytes(
         Uint8Array.from(atob(serializable.PublicKey.First), (c) =>
           c.charCodeAt(0)
@@ -52,7 +52,7 @@ export async function loadKeyPairFromFile(filename: string): Promise<KeyPair> {
           c.charCodeAt(0)
         )
       ),
-    },
+    }),
     secretKey: new SecretKey(
       BigInt(`0x${serializable.SecretKey.First}`),
       BigInt(`0x${serializable.SecretKey.Second}`)
