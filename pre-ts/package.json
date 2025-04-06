@@ -1,7 +1,7 @@
 {
     "type": "module",
     "name": "pre-ts",
-    "version": "0.1.4-fix",
+    "version": "0.1.5",
     "description": "TypeScript implementation of Proxy Re-Encryption (PRE)",
     "main": "dist/bundle.js",
     "types": "dist/index.d.ts",
