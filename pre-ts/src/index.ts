@@ -183,7 +183,7 @@ export interface GetStoredFileResponse {
     size: number;
     mime_type: string;
     object_url: string;
-    owner_id: string;
+    // owner_id: string;
     // crypto_info: {
     //   id: string;
     //   type: string;
