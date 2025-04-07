@@ -150,14 +150,14 @@ export class SecondLevelSymmetricKey {
     }
 
     static fromBytes(keyBytes: Uint8Array): SecondLevelSymmetricKey {
-        if (keyBytes.length !== 224) {
+        if (keyBytes.length !== 448) {
             throw new Error(
-                `Invalid byte length for SecondLevelSymmetricKey: expected 224, got ${keyBytes.length}`
+                `Invalid byte length for SecondLevelSymmetricKey: expected 448, got ${keyBytes.length}`
             );
         }
         // Convert bytes back to G1Point and GTElement
-        const first = BN254CurveWrapper.G1FromBytes(keyBytes.slice(0, 96));
-        const second = BN254CurveWrapper.GTFromBytes(keyBytes.slice(96, 224));
+        const first = BN254CurveWrapper.G1FromBytes(keyBytes.slice(0, 64));
+        const second = BN254CurveWrapper.GTFromBytes(keyBytes.slice(64, 448));
         return new SecondLevelSymmetricKey(first, second);
     }
 }
