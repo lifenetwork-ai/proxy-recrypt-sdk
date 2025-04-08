@@ -1,5 +1,6 @@
 import { combineSecret, splitSecret } from ".";
 import { generateRandomSymmetricKeyFromGT } from "../crypto";
+import { describe, test, expect } from "@jest/globals";
 
 describe("Test Shamir's Secret Sharing", () => {
   test("Split then combine simple secret", async () => {
@@ -20,9 +21,10 @@ describe("Test Shamir's Secret Sharing", () => {
 
     const sharesArray = await splitSecret(secret, threshold, shares);
 
-    const combinedSecret = await combineSecret(
-      [sharesArray[0], sharesArray[1]]
-    );
+    const combinedSecret = await combineSecret([
+      sharesArray[0],
+      sharesArray[1],
+    ]);
     expect(combinedSecret.toString()).toEqual(secret.toString());
   });
 
@@ -34,13 +36,17 @@ describe("Test Shamir's Secret Sharing", () => {
 
     const sharesArray = await splitSecret(secret, threshold, shares);
 
-    const combinedSecret = await combineSecret(
-      [sharesArray[0], sharesArray[1], sharesArray[2]]
-    );
+    const combinedSecret = await combineSecret([
+      sharesArray[0],
+      sharesArray[1],
+      sharesArray[2],
+    ]);
 
-    const combinedSecret2 = await combineSecret(
-      [sharesArray[1], sharesArray[2], sharesArray[3]]
-    );
+    const combinedSecret2 = await combineSecret([
+      sharesArray[1],
+      sharesArray[2],
+      sharesArray[3],
+    ]);
 
     expect(Buffer.from(combinedSecret).toString()).toBeTruthy();
     expect(combinedSecret.toString()).toEqual(secret.toString());

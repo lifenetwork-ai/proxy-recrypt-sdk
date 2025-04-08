@@ -1,7 +1,7 @@
 // export class SecondLevelSymmetricKey {
 //     first: G1Point; // First component in G1 group
 //     second: GTElement; // Second component in GT group
-
+import { describe, test, expect } from "@jest/globals";
 import { BN254CurveWrapper } from "./crypto";
 import { SecondLevelSymmetricKey } from "./types";
 
@@ -34,15 +34,15 @@ import { SecondLevelSymmetricKey } from "./types";
 // }
 
 describe("test SecondLevelSymmetricKey", () => {
-    test("toBytes and fromBytes should work correctly", () => {
-        const first = BN254CurveWrapper.G1Generator();
-        const second = BN254CurveWrapper.GTBase();
-        const key = new SecondLevelSymmetricKey(first, second);
+  test("toBytes and fromBytes should work correctly", () => {
+    const first = BN254CurveWrapper.G1Generator();
+    const second = BN254CurveWrapper.GTBase();
+    const key = new SecondLevelSymmetricKey(first, second);
 
-        const bytes = key.toBytes();
-        const newKey = SecondLevelSymmetricKey.fromBytes(bytes);
+    const bytes = key.toBytes();
+    const newKey = SecondLevelSymmetricKey.fromBytes(bytes);
 
-        expect(newKey.first).toEqual(first);
-        expect(newKey.second).toEqual(second);
-    });
+    expect(newKey.first).toEqual(first);
+    expect(newKey.second).toEqual(second);
+  });
 });

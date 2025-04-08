@@ -1,6 +1,6 @@
-import { bn254 } from "@noble/curves/bn254";
 import { BN254CurveWrapper } from "./bn254";
 import { deriveKeyFromGT, generateRandomSymmetricKeyFromGT } from "./hdkf";
+import { describe, test, expect } from "@jest/globals";
 
 describe("HDKF", () => {
   test("HDKF derive", async () => {

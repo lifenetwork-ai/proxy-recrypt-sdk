@@ -200,3 +200,83 @@ export async function loadAllTestData() {
     bobKeyPair,
   };
 }
+
+export function createRandomHexString(length: number): string {
+  const chars = "0123456789abcdef";
+  return createRandomString(chars, length);
+}
+
+// Function to generate a random hex string of a given length using chunking
+export function createRandomString(chars: string, length: number) {
+  let result = "";
+  const chunkSize = 10000; // Process 10000 characters at a time
+
+  for (let i = 0; i < length; i += chunkSize) {
+    const currentChunkSize = Math.min(chunkSize, length - i);
+    const randomArray = new Uint8Array(currentChunkSize);
+    crypto.getRandomValues(randomArray);
+
+    let chunkResult = "";
+    randomArray.forEach((number) => {
+      chunkResult += chars[number % chars.length];
+    });
+
+    result += chunkResult;
+  }
+
+  return result;
+}
+
+// Function to generate random bytes for testing
+export function generateRandomBytesForTesting(length: number): Uint8Array {
+  const bytes = new Uint8Array(length);
+  crypto.getRandomValues(bytes);
+  return bytes;
+}
+export function createRandomBase64String(length: number): string {
+  // Constants for chunking
+  const chunkSize = 30000; // Number of bytes per chunk
+  let result = "";
+
+  // Process in chunks to avoid memory issues with very large strings
+  for (let processedLength = 0; processedLength < length; ) {
+    // Calculate how many more Base64 characters we need
+    const remainingLength = length - processedLength;
+
+    // Calculate how many bytes to generate for this chunk
+    // Base64 encoding: 3 bytes -> 4 Base64 chars
+    // So multiply by 0.75 to get bytes needed
+    const bytesToGenerate = Math.min(
+      chunkSize,
+      Math.ceil(remainingLength * 0.75) + 3 // +3 for potential padding
+    );
+
+    // Generate random bytes for this chunk
+    const chunkBytes = new Uint8Array(bytesToGenerate);
+    crypto.getRandomValues(chunkBytes);
+
+    // Convert bytes to binary string
+    const binaryString = Array.from(chunkBytes)
+      .map((byte) => String.fromCharCode(byte))
+      .join("");
+
+    // Convert to Base64
+    const chunkBase64 = btoa(binaryString);
+
+    // Calculate how many Base64 chars to take from this chunk
+    const charsToTake = Math.min(remainingLength, chunkBase64.length);
+
+    // Add to result
+    result += chunkBase64.substring(0, charsToTake);
+
+    // Update processed length
+    processedLength += charsToTake;
+  }
+
+  return result;
+}
+
+export function createRandomUTF8String(length: number): string {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+  return createRandomString(chars, length);
+}

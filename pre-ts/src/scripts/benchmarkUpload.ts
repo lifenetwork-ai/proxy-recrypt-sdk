@@ -1,15 +1,10 @@
 import fs from "fs";
 import path from "path";
 import crypto from "crypto";
-import {
-  generateRandomSymmetricKeyFromGT,
-} from "../crypto/index";
+import { generateRandomSymmetricKeyFromGT } from "../crypto/index";
 import { combineSecret, splitSecret } from "../shamir/index";
 import { PreClient } from "../pre";
-import {
-  loadAliceKeyPair,
-  loadRandomScalar,
-} from "../utils/testUtils";
+import { loadAliceKeyPair, loadRandomScalar } from "../utils/testUtils";
 
 /**
  * Generates a random file of specified size
@@ -20,10 +15,6 @@ const generateRandomFile = async (
   filename: string,
   sizeInBytes: number
 ): Promise<void> => {
-  console.log(
-    `Generating random file: ${filename} (${sizeInBytes / (1024 * 1024)} MB)`
-  );
-
   const chunkSize = 1024 * 1024; // Generate in 1MB chunks for memory efficiency
   const fd = fs.openSync(filename, "w");
 
@@ -137,12 +128,9 @@ const runBenchmarks = async () => {
     const keypair = await loadAliceKeyPair();
     const scalar = await loadRandomScalar();
     // Step 3: Combine subset of shares to reconstruct secret
-    await runBenchmark(
-      "Secret Reconstruction",
-      async () => {
-        return combineSecret([sharesArray[0], sharesArray[1]]);
-      }
-    );
+    await runBenchmark("Secret Reconstruction", async () => {
+      return combineSecret([sharesArray[0], sharesArray[1]]);
+    });
 
     // Step 4: Encryption benchmark
     const client = new PreClient();

@@ -2,7 +2,6 @@ import { SecretKey } from "../types";
 import { bn254 } from "@noble/curves/bn254";
 export function generateRandomSecretKey(): SecretKey {
   const secret = new SecretKey(generateRandomScalar(), generateRandomScalar());
-
   return secret;
 }
 
@@ -13,6 +12,5 @@ export function generateRandomScalar(): bigint {
 
   // Generate a random scalar in [0, order-1]
   const scalar = BigInt(Math.floor(Math.random() * Number(order)));
-
   return scalar;
 }
