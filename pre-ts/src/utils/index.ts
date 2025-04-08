@@ -110,19 +110,18 @@ const G1_POINT_SIZE = 64; // Size in bytes for uncompressed G1 point
  * Converts a G1 point to its raw bytes representation
  * Following the Go implementation format
  */
-
 export function g1ToBytes(point: { x: bigint; y: bigint }): Uint8Array {
     // Allocate buffer for uncompressed point
     const result = new Uint8Array(G1_POINT_SIZE);
 
-    // Store Y coordinate in the second 32 bytes
-    bigIntToBytes(point.y, result.subarray(32, 64));
+    // Set the uncompressed flag in the first byte
+    result[0] = 0x04; // Standard uncompressed point format prefix
 
-    // Store X coordinate in the first 32 bytes
+    // Store X coordinate in the first 32 bytes (after setting the flag)
     bigIntToBytes(point.x, result.subarray(0, 32));
 
-    // Set the uncompressed flag in the first byte
-    result[0] |= 0x00;
+    // Store Y coordinate in the second 32 bytes
+    bigIntToBytes(point.y, result.subarray(32, 64));
 
     return result;
 }
@@ -135,8 +134,8 @@ export function g1FromBytes(bytes: Uint8Array): { x: bigint; y: bigint } {
         );
     }
 
-    // Check the uncompressed flag in the first byte (optional, depending on your requirements)
-    if ((bytes[0] & 0xff) !== 0x00) {
+    // Check the uncompressed flag in the first byte
+    if (bytes[0] !== 0x04) {
         throw new Error("Invalid G1 point: not in uncompressed format");
     }
 
