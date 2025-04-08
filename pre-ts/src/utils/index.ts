@@ -111,16 +111,13 @@ const G1_POINT_SIZE = 64; // Size in bytes for uncompressed G1 point
  * Following the Go implementation format
  */
 export function g1ToBytes(point: { x: bigint; y: bigint }): Uint8Array {
-    // Allocate buffer for uncompressed point
-    const result = new Uint8Array(G1_POINT_SIZE);
+    // Allocate buffer for point coordinates
+    const result = new Uint8Array(G1_POINT_SIZE); // Should be 64 bytes total
 
-    // Set the uncompressed flag in the first byte
-    result[0] = 0x04; // Standard uncompressed point format prefix
-
-    // Store X coordinate in the first 32 bytes (after setting the flag)
+    // Store X coordinate in first 32 bytes
     bigIntToBytes(point.x, result.subarray(0, 32));
 
-    // Store Y coordinate in the second 32 bytes
+    // Store Y coordinate in second 32 bytes
     bigIntToBytes(point.y, result.subarray(32, 64));
 
     return result;
@@ -134,20 +131,14 @@ export function g1FromBytes(bytes: Uint8Array): { x: bigint; y: bigint } {
         );
     }
 
-    // Check the uncompressed flag in the first byte
-    if (bytes[0] !== 0x04) {
-        throw new Error("Invalid G1 point: not in uncompressed format");
-    }
-
-    // Extract X coordinate from the first 32 bytes
+    // Extract X coordinate from first 32 bytes
     const x = bytesToBigInt(bytes.subarray(0, 32));
 
-    // Extract Y coordinate from the second 32 bytes
+    // Extract Y coordinate from second 32 bytes
     const y = bytesToBigInt(bytes.subarray(32, 64));
 
     return { x, y };
 }
-
 /**
  * Converts an Fp12 element to bytes in the order matching the Go implementation.
  * The result is a big-endian byte array.
