@@ -1,5 +1,6 @@
-const crypto = globalThis.crypto;
+import { webcrypto } from "crypto";
 
+const crypto = webcrypto || globalThis.crypto;
 /**
  * Encrypts data using AES-GCM and prepends the nonce to the ciphertext.
  *
@@ -51,7 +52,7 @@ export async function encryptAESGCM(
   );
 
   // Combine nonce and ciphertext
-  const result = new Uint8Array(nonce.length + ciphertext.byteLength);
+  const result = new Uint8Array(nonce?.length + ciphertext.byteLength);
   result.set(nonce);
   result.set(new Uint8Array(ciphertext), nonce.length);
 
@@ -82,7 +83,7 @@ export async function decryptAESGCM(
     for (let i = 0; i < 12; i++) {
       nonce[i] = encrypted[i];
     }
-    
+
     const ciphertext = new Uint8Array(encrypted.length - 12);
     for (let i = 0; i < ciphertext.length; i++) {
       ciphertext[i] = encrypted[i + 12];
@@ -113,4 +114,3 @@ export async function decryptAESGCM(
     throw new Error(`Decryption failed: ${err.message}`);
   }
 }
-

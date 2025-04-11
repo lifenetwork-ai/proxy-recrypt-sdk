@@ -34,7 +34,7 @@ yarn add pre-ts
 import { PreSdk, SecretKey } from "pre-ts";
 
 const client = new PreSdk();
-const shares = await client.generateKeys();
+const shares = await client.generateShares();
 
 const data = new Uint8Array([
     /* your data */
@@ -49,7 +49,7 @@ const encrypted = await client.encryptData(secretKey, data);
 
 ```ts
 const client = new PreSdk();
-const shares = await client.generateKeys();
+const shares = await client.generateShares();
 ```
 
 ### 2. Share Protection (Optional)
@@ -115,7 +115,7 @@ const decrypted = await client.preClient.decryptFirstLevel(
 
 #### Methods:
 
--   `generateKeys(): Promise<Uint8Array[]>`
+-   `generateShares(): Promise<Uint8Array[]>`
 -   `encryptData(secret: SecretKey, data: Uint8Array): Promise<SecondLevelEncryptionResponse>`
 -   `pre`: Contains utility methods like `combineSecret()`
 

@@ -3,7 +3,7 @@ import { BN254CurveWrapper, G2Point } from "../crypto/bn254";
 import { base64BufferToBigInt } from "./index";
 import { GTElement } from "../crypto/bn254";
 import { KeyPair, PublicKey, SecretKey } from "../types";
-
+import crypto from "crypto";
 // Interface for JSON serialization/deserialization
 interface SerializableKeyPair {
   PublicKey: {
@@ -98,7 +98,9 @@ export async function loadSymmetricKeyGT(): Promise<GTElement> {
     "../testdata/symmetric_key_gt.txt",
     "utf-8"
   );
-  return BN254CurveWrapper.GTFromBytes(Buffer.from(buffer.trim(), "base64"));
+  return BN254CurveWrapper.GTFromBytes(
+    new Uint8Array(Buffer.from(buffer.trim(), "base64"))
+  );
 }
 
 export async function loadSymmetricKey(): Promise<Uint8Array> {
@@ -133,7 +135,7 @@ export const getFirstLevelEncryptedKeyFirst = async (): Promise<GTElement> => {
     "utf-8"
   );
   return BN254CurveWrapper.GTFromBytes(
-    Buffer.from(firstLevelEncryptedKeyFirst.trim(), "base64")
+    new Uint8Array(Buffer.from(firstLevelEncryptedKeyFirst.trim(), "base64"))
   );
 };
 
@@ -143,7 +145,7 @@ export const getFirstLevelEncryptedKeySecond = async (): Promise<GTElement> => {
     "utf-8"
   );
   return BN254CurveWrapper.GTFromBytes(
-    Buffer.from(firstLevelEncryptedKeySecond.trim(), "base64")
+    new Uint8Array(Buffer.from(firstLevelEncryptedKeySecond.trim(), "base64"))
   );
 };
 
@@ -162,7 +164,9 @@ export const getSecondLevelEncryptedKeySecond =
       "utf-8"
     );
     return BN254CurveWrapper.GTFromBytes(
-      Buffer.from(secondLevelEncryptedKeySecond.trim(), "base64")
+      new Uint8Array(
+        Buffer.from(secondLevelEncryptedKeySecond.trim(), "base64")
+      )
     );
   };
 

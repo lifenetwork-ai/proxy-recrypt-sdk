@@ -19,6 +19,7 @@
         "@noble/curves": "^1.8.1",
         "bigint-mod-arith": "^3.3.1",
         "bn.js": "^5.2.1",
+        "jest-environment-jsdom": "^29.7.0",
         "js-crypto-hkdf": "^1.0.7",
         "shamir-secret-sharing": "^0.0.4"
     },

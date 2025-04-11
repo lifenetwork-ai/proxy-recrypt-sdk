@@ -1,4 +1,4 @@
-import { BN254CurveWrapper } from "./crypto";
+import { BN254CurveWrapper, decryptAESGCM } from "./crypto";
 import { PreClient } from "./pre";
 import {
   loadAllTestData,
@@ -8,9 +8,8 @@ import {
   getSecondLevelEncryptedKeyFirst,
   getSecondLevelEncryptedKeySecond,
 } from "./utils/testUtils";
-import { SecretKey } from "./types";
+import { SecondLevelSymmetricKey, SecretKey } from "./types";
 import { describe, test, expect, beforeEach } from "@jest/globals";
-
 describe("PRE", () => {
   test("confirm secret and public key relation", async () => {
     const aliceKeyPair = await loadAliceKeyPair();
@@ -139,6 +138,86 @@ describe("PreclientImpl", () => {
         new SecretKey(0n, 0n),
         Buffer.from("tests"),
         invalidScalar
+      )
+    ).rejects.toThrow();
+  });
+
+  test("should decrypt second level encrypted data correctly", async () => {
+    const testData = await loadAllTestData();
+    const client = new PreClient();
+
+    // First, encrypt data using secondLevelEncryption (similar to existing test)
+    const secondLevelResponse = await client.secondLevelEncryption(
+      testData.aliceKeyPair.secretKey,
+      testData.message,
+      testData.randomScalar,
+      testData.symmetricKeyGT,
+      testData.symmetricKey,
+      testData.mockNonce
+    );
+
+    // Now, decrypt the data using decryptSecondLevel
+    const decryptedMessage = await client.decryptSecondLevel(
+      secondLevelResponse.encryptedKey,
+      secondLevelResponse.encryptedMessage,
+      testData.aliceKeyPair.secretKey
+    );
+
+    // Verify the decrypted message matches the original message
+    expect(Buffer.compare(decryptedMessage, testData.message)).toBe(0);
+  });
+
+  test("should decrypt second level key correctly", async () => {
+    const testData = await loadAllTestData();
+    const client = new PreClient();
+
+    // First, encrypt data to get the encrypted key
+    const secondLevelResponse = await client.secondLevelEncryption(
+      testData.aliceKeyPair.secretKey,
+      testData.message,
+      testData.randomScalar,
+      testData.symmetricKeyGT,
+      testData.symmetricKey,
+      testData.mockNonce
+    );
+
+    // Now, decrypt just the key using decryptSecondLevelKey
+    const decryptedKey = await client.decryptSecondLevelKey(
+      secondLevelResponse.encryptedKey,
+      testData.aliceKeyPair.secretKey
+    );
+
+    // Verify the decrypted key can be used to decrypt the message
+    const decryptedMessage = await decryptAESGCM(
+      secondLevelResponse.encryptedMessage,
+      decryptedKey
+    );
+
+    // Verify the decrypted message matches the original message
+    expect(Buffer.compare(decryptedMessage, testData.message)).toBe(0);
+  });
+
+  test("decryptSecondLevel should throw on invalid input", async () => {
+    const client = new PreClient();
+
+    // Create invalid encrypted key with null/zero values
+    const invalidEncryptedKey = new SecondLevelSymmetricKey(
+      BN254CurveWrapper.G1Generator(),
+      BN254CurveWrapper.GTBase()
+    );
+
+    // Empty encrypted message
+    const emptyEncryptedMessage = new Uint8Array();
+
+    // Invalid secret key with zero values
+    const invalidSecretKey = new SecretKey(0n, 0n);
+
+    // Expect decryptSecondLevel to throw with invalid inputs
+    await expect(
+      client.decryptSecondLevel(
+        invalidEncryptedKey,
+        emptyEncryptedMessage,
+        invalidSecretKey
       )
     ).rejects.toThrow();
   });

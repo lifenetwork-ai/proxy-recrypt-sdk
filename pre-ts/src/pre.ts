@@ -13,37 +13,12 @@ import {
   decryptAESGCM,
   generateRandomSymmetricKeyFromGT,
   deriveKeyFromGT,
+  getCrypto,
 } from "./crypto";
 import { BN254CurveWrapper, G1Point, G2Point, GTElement } from "./crypto/bn254";
 import { bn254 } from "@noble/curves/bn254";
 import * as bigintModArith from "bigint-mod-arith";
 import { generateRandomSecretKey } from "./utils/keypair";
-
-/* eslint-disable @typescript-eslint/no-require-imports */
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* istanbul ignore next */
-function getCrypto() {
-  if (typeof window !== "undefined" && window.crypto) {
-    // Browser environment
-    return window.crypto;
-  } else if (typeof global !== "undefined") {
-    // Node.js environment
-    try {
-      const nodeCrypto = require("crypto");
-      if (nodeCrypto.webcrypto) {
-        return nodeCrypto.webcrypto;
-      }
-      const { Crypto } = require("@peculiar/webcrypto");
-      return new Crypto();
-    } catch (error: any) {
-      throw new Error(
-        "Crypto support not available. Please install @peculiar/webcrypto package." +
-          error.message
-      );
-    }
-  }
-  throw new Error("No crypto implementation available in this environment");
-}
 
 export class PreClient {
   G1: G1Point;

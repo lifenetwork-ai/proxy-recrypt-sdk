@@ -4,7 +4,6 @@ import {
   SecretKey,
   FirstLevelSymmetricKey,
   SecondLevelEncryptionResponse,
-  parseFirstLevelSymmetricKey,
   PublicKey,
 } from "./types";
 import { G2Point, GTElement, BN254CurveWrapper } from "./crypto/bn254";
@@ -27,8 +26,16 @@ export interface IPreClient {
   storeShare(): void;
 }
 
-export class PreSdk implements IPreClient {
+export interface IKeySplitter {
+  generateShares(): Promise<Array<Uint8Array>>;
+}
+
+export class PreSdk implements IPreClient, IKeySplitter {
   preClient: PreClient;
+
+  /// Paramteter for KeySplitter
+  shareCount: number = 3; // number of shares
+  threshold: number = 2; // minimum number of shares needed to reconstruct the secret
 
   constructor() {
     this.preClient = new PreClient();
@@ -39,13 +46,38 @@ export class PreSdk implements IPreClient {
     return keyPair;
   }
 
+  /**
+   * @deprecated This method is deprecated and will be removed in future versions. Use generateShares instead
+   * Generate a random secret key, then split it into n shares
+   * @returns {Promise<Array<Uint8Array>>} An array of Uint8Array shares
+   * @throws {Error} If the key generation fails
+   */
   async generateKeys(): Promise<Array<Uint8Array>> {
     const secretKey = this.preClient.generateRandomKeyPair().secretKey;
     const bytes = secretKey.toBytes();
     const shares = await splitSecret(bytes, 2, 3);
     return shares;
   }
+  /**
+   * Generate a random secret key, then split it into n shares
+   * @returns {Promise<Array<Uint8Array>>} An array of Uint8Array shares
+   * @throws {Error} If the key generation fails
+   */
+  async generateShares(): Promise<Array<Uint8Array>> {
+    const secretKey = this.preClient.generateRandomKeyPair().secretKey;
+    const bytes = secretKey.toBytes();
+    const shares = await splitSecret(bytes, this.threshold, this.shareCount);
+    return shares;
+  }
 
+  /** 
+   * Encrypts the data using the secret key.
+     Each time this method is called, a new random scalar(for symmetrical encryption) is generated to ensure that the encryption is unique.
+   * @param secret The secret key to encrypt the data with
+   * @param data The data to encrypt - should be serialized form of sensitive data
+   * @returns {Promise<SecondLevelEncryptionResponse>} The encrypted data, which
+      consists of the encrypted symmetric key and the encrypted data
+   */
   async encryptData(
     secret: SecretKey,
     data: Uint8Array
@@ -59,6 +91,13 @@ export class PreSdk implements IPreClient {
     return encryptedData;
   }
 
+  /**
+   *
+   * @param encryptedKey
+   * @param encryptedData
+   * @param secret
+   * @returns
+   */
   async decryptData(
     encryptedKey: FirstLevelSymmetricKey,
     encryptedData: Uint8Array,
@@ -319,7 +358,8 @@ export class ProxyClient {
    */
   async storeFile(
     encryptedData: Uint8Array,
-    filename?: string
+    filename?: string,
+    customHeader: HeadersInit = {}
   ): Promise<StoreResponse> {
     const formDataRequest: FormData = new FormData();
     // Use btoa for base64 encoding of byte arrays
@@ -337,6 +377,7 @@ export class ProxyClient {
         method: "POST",
         headers: {
           ...this.headers,
+          ...customHeader,
         },
         body: formDataRequest,
       }
@@ -355,13 +396,17 @@ export class ProxyClient {
     };
   }
 
-  async getStoredFile(fileID: string): Promise<GetStoredFileResponse> {
+  async getStoredFile(
+    fileID: string,
+    customHeader: HeadersInit = {}
+  ): Promise<GetStoredFileResponse> {
     const response = await fetch(
       `${this.baseUrl}${this.endpoints.getUploadedFile(fileID)}`,
       {
         method: "GET",
         headers: {
           ...this.headers,
+          ...customHeader,
         },
       }
     );
@@ -383,13 +428,18 @@ export class ProxyClient {
     };
   }
 
-  async getStoredFiles(page?: number, size?: number) {
+  async getStoredFiles(
+    page?: number,
+    size?: number,
+    customHeader: HeadersInit = {}
+  ): Promise<GetStoredFilesResponse> {
     const response = await fetch(
       `${this.baseUrl}${this.endpoints.getUploadedFiles}?page=${page}&size=${size}`,
       {
         method: "GET",
         headers: {
           ...this.headers,
+          ...customHeader,
         },
       }
     );
@@ -404,51 +454,7 @@ export class ProxyClient {
       throw new Error("Failed to fetch stored files");
     }
 
-    return result.payload;
-  }
-
-  /**
-   * Request re-encrypted data from the proxy server
-   * @param requestId The ID of the data to re-encrypt
-   * @returns Promise with the re-encrypted data and first level key
-   */
-  async request(requestId: string): Promise<{
-    firstLevelKey: FirstLevelSymmetricKey;
-    encryptedData: Uint8Array;
-  }> {
-    const response = await fetch(`${this.baseUrl}/request`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ request_id: requestId }),
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(`Request failed: ${error.error}`);
-    }
-
-    const result: RequestResponse = await response.json();
-    // Convert the serialized response back to the proper types
-    return {
-      firstLevelKey: parseFirstLevelSymmetricKey(result.first_level_key),
-      encryptedData: result.encrypted_data,
-    };
-  }
-
-  /**
-   * Helper method to convert Uint8Array to Base64 string
-   */
-  static toBase64(data: Uint8Array): string {
-    return btoa(String.fromCharCode(...data));
-  }
-
-  /**
-   * Helper method to convert Base64 string to Uint8Array
-   */
-  static fromBase64(base64: string): Uint8Array {
-    return new Uint8Array([...atob(base64)].map((c) => c.charCodeAt(0)));
+    return result;
   }
 }
 
