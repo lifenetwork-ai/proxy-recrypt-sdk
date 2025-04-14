@@ -52,8 +52,8 @@ const encrypted = await client.encryptData(secret, data);
 ```typescript
 // 1. Initialize clients
 const client = new PreSdk();
-const proxyClient = new pre.ProxyClient(
-  "http://localhost:8080/api/v1/dataowner",
+const damClient = new DAMClient(
+  "http://localhost:8080",
   "organization-id",
   "auth-token"
 );
@@ -68,31 +68,16 @@ const senderSecret = SecretKey.fromBytes(
 const data = new Uint8Array(/* your data */);
 const encrypted = await client.encryptData(senderSecret, data);
 
-// 4. Generate re-encryption key for recipient
-const reKey = client.preClient.generateReEncryptionKey(
-  senderSecret.first,
-  recipientPublic.second
-);
+// 4. Upload encrypted data to DAM service
+const uploadResponse = await damClient.storeFile(encrypted.encryptedMessage);
 
-// 5. Store encrypted data with proxy
-const proxyStoreId = await proxyClient.store(
-  reKey,
-  encrypted.encryptedKey,
-  encrypted.encryptedMessage,
-  "userId"
-);
+// 5. Share the key with recipient
+await damClient.uploadKey(senderShares[0], recipientPublicKey);
 
 // 6. Recipient retrieves and decrypts data
-const { firstLevelKey, encryptedData } = await proxyClient.request(
-  proxyStoreId
-);
-const decrypted = await client.preClient.decryptFirstLevel(
-  {
-    encryptedKey: firstLevelKey,
-    encryptedMessage: encryptedData,
-  },
-  recipientSecretKey
-);
+const keyShare = await damClient.getKeyShare();
+const storedFile = await damClient.getStoredFile(uploadResponse.id);
+// Decrypt using the retrieved key share and file
 ```
 
 ## API Reference
@@ -107,14 +92,17 @@ Main client class for cryptographic operations.
 - `encryptData(secret: SecretKey, data: Uint8Array): Promise<SecondLevelEncryptionResponse>` - Encrypts data
 - `pre.combineSecret(shares: Uint8Array[]): Promise<Uint8Array>` - Reconstructs secret from shares
 
-### ProxyClient
+### DAMClient
 
-Handles proxy server communication.
+Handles Data Access Management (DAM) service communication.
 
 #### Methods
 
-- `store(reEncryptionKey: G2Point, encryptedKey: Uint8Array, encryptedMessage: Uint8Array, userId: string): Promise<string>` - Stores encrypted data
-- `request(id: string): Promise<{ firstLevelKey: Uint8Array, encryptedData: Uint8Array }>` - Retrieves re-encrypted data
+- `uploadKey(share: Uint8Array, pubkey: PublicKey): Promise<void>` - Uploads a key share
+- `getKeyShare(): Promise<Uint8Array>` - Retrieves a shared key
+- `storeFile(encryptedData: Uint8Array, filename?: string): Promise<StoreResponse>` - Stores encrypted file
+- `getStoredFile(fileID: string): Promise<GetStoredFileResponse>` - Retrieves stored file information
+- `getStoredFiles(page?: number, size?: number): Promise<GetStoredFilesResponse>` - Lists stored files
 
 ## File Support
 
