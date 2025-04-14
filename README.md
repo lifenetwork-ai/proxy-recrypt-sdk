@@ -1,24 +1,21 @@
-# Crypto Library
+# Human Network PRE SDK
 
-A TypeScript SDK for Proxy Re-Encryption (PRE) and cryptographic primitives, enabling secure data sharing directly in the browser.
+A TypeScript SDK for Proxy Re-Encryption (PRE) that enables secure data sharing directly in the browser. Built on the BN254 curve, this SDK implements client-side cryptographic operations for key generation, encryption, and secure data sharing through proxy re-encryption.
 
 [![codecov](https://codecov.io/gh/tuantran-genetica/human-network-pre-lib/graph/badge.svg?token=7JUVSD2ESJ)](https://codecov.io/gh/tuantran-genetica/human-network-pre-lib)
 
 ## Overview
 
-This SDK allows users to securely encrypt and share data via a proxy service, without exposing raw data to the proxy. It includes full client-side support for key generation, encryption, and Proxy Re-Encryption (PRE).
+This SDK allows users to securely encrypt and share data via a proxy service, without exposing raw data to the proxy. It implements the PRE method as detailed in our [design specification](https://www.overleaf.com/read/fxqmmczvtxjn#cc8f9b).
 
-This SDK implements the PRE method as detailed in our design spec:
-[Overleaf PRE Design Doc](https://www.overleaf.com/read/fxqmmczvtxjn#cc8f9b) (Work in progress)
+### Key Features
 
-## Key Features
-
--   ✨ **Client-Side Only**: All crypto operations are performed in-browser
--   🔐 **Key Generation**: Generate secure encryption keys with share splitting
--   🔑 **Passphrase Protection**: Add passphrase security to key shares
--   📁 **Data Encryption**: Encrypt arbitrary data (files, images, etc.) in the browser
--   🔄 **Proxy Re-Encryption**: Share encrypted data securely without giving direct access
--   📅 **Local Storage Support**: Save key shares securely in browser storage
+- ✨ **Client-Side Security**: All cryptographic operations performed in-browser
+- 🔐 **Shamir's Secret Sharing**: Split keys into secure shares with configurable thresholds
+- 🔑 **Passphrase Protection**: Optional encryption for key shares
+- 📁 **File Encryption**: Support for images and files up to 10MB
+- 🔄 **Proxy Re-Encryption**: Share encrypted data without exposing content
+- 📅 **Browser Storage**: Secure local storage integration
 
 ## Installation
 
@@ -30,115 +27,115 @@ yarn add human-network-pre
 
 ## Quick Start
 
-```ts
+### Basic Encryption Example
+
+```typescript
 import { PreSdk, SecretKey } from "human-network-pre";
 
+// Initialize SDK
 const client = new PreSdk();
-const shares = await client.generateKeys();
 
-const data = new Uint8Array([
-    /* your data */
-]);
-const secretKey = SecretKey.fromBytes(await client.pre.combineSecret(shares));
-const encrypted = await client.encryptData(secretKey, data);
-```
+// Generate and split keys (returns 3 shares)
+const shares = await client.generateShares();
 
-## Usage Guide
-
-### 1. Key Generation
-
-```ts
-const client = new PreSdk();
-const shares = await client.generateKeys();
-```
-
-### 2. Share Protection (Optional)
-
-```ts
-const passphrase = "your-secure-passphrase";
-const encryptedShare = await encryptShare(shares[0], passphrase);
-
-localStorage.setItem(
-    "share1",
-    JSON.stringify({
-        share: Array.from(new Uint8Array(encryptedShare)),
-        hasPassphrase: true,
-        passphraseHash: hashPassphrase(passphrase),
-    })
-);
-```
-
-### 3. Data Encryption
-
-```ts
-const secretBytes = await client.pre.combineSecret([share1Array, share2Array]);
+// Combine shares to reconstruct secret
+const secretBytes = await client.pre.combineSecret([shares[0], shares[1]]);
 const secret = SecretKey.fromBytes(secretBytes);
-const encrypted = await client.encryptData(secret, new Uint8Array(dataBuffer));
+
+// Encrypt data
+const data = new Uint8Array(/* your data */);
+const encrypted = await client.encryptData(secret, data);
 ```
 
-### 4. Proxy Re-Encryption
+### Complete Data Sharing Flow
 
-```ts
+```typescript
+// 1. Initialize clients
+const client = new PreSdk();
+const proxyClient = new pre.ProxyClient(
+  "http://localhost:8080/api/v1/dataowner",
+  "organization-id",
+  "auth-token"
+);
+
+// 2. Generate sender's keys
+const senderShares = await client.generateShares();
+const senderSecret = SecretKey.fromBytes(
+  await client.pre.combineSecret([senderShares[0], senderShares[1]])
+);
+
+// 3. Encrypt data
+const data = new Uint8Array(/* your data */);
+const encrypted = await client.encryptData(senderSecret, data);
+
+// 4. Generate re-encryption key for recipient
 const reKey = client.preClient.generateReEncryptionKey(
-    senderSecret.first,
-    recipientPublic.second
+  senderSecret.first,
+  recipientPublic.second
 );
 
-const proxyClient = new pre.ProxyClient();
-await proxyClient.store(
-    reKey,
-    encrypted.encryptedKey,
-    encrypted.encryptedMessage,
-    "userId"
+// 5. Store encrypted data with proxy
+const proxyStoreId = await proxyClient.store(
+  reKey,
+  encrypted.encryptedKey,
+  encrypted.encryptedMessage,
+  "userId"
 );
-```
 
-### 5. Decryption by Recipient
-
-```ts
+// 6. Recipient retrieves and decrypts data
 const { firstLevelKey, encryptedData } = await proxyClient.request(
-    proxyStoreId
+  proxyStoreId
 );
-
 const decrypted = await client.preClient.decryptFirstLevel(
-    {
-        encryptedKey: firstLevelKey,
-        encryptedMessage: encryptedData,
-    },
-    recipientSecretKey
+  {
+    encryptedKey: firstLevelKey,
+    encryptedMessage: encryptedData,
+  },
+  recipientSecretKey
 );
 ```
 
 ## API Reference
 
-### `PreSdk`
+### PreSdk
 
-#### Methods:
+Main client class for cryptographic operations.
 
--   `generateKeys(): Promise<Uint8Array[]>`
--   `encryptData(secret: SecretKey, data: Uint8Array): Promise<SecondLevelEncryptionResponse>`
--   `pre`: Contains utility methods like `combineSecret()`
+#### Methods
 
-### `ProxyClient`
+- `generateShares(): Promise<Array<Uint8Array>>` - Generates key shares (3 shares, 2-share threshold)
+- `encryptData(secret: SecretKey, data: Uint8Array): Promise<SecondLevelEncryptionResponse>` - Encrypts data
+- `pre.combineSecret(shares: Uint8Array[]): Promise<Uint8Array>` - Reconstructs secret from shares
+
+### ProxyClient
 
 Handles proxy server communication.
 
-#### Methods:
+#### Methods
 
--   `store(reEncryptionKey: G2Point, encryptedKey: Uint8Array, encryptedMessage: Uint8Array, userId: string): Promise<ProxyResponse>`
--   `request(id: string): Promise<{ firstLevelKey: Uint8Array, encryptedData: Uint8Array }>`
+- `store(reEncryptionKey: G2Point, encryptedKey: Uint8Array, encryptedMessage: Uint8Array, userId: string): Promise<string>` - Stores encrypted data
+- `request(id: string): Promise<{ firstLevelKey: Uint8Array, encryptedData: Uint8Array }>` - Retrieves re-encrypted data
+
+## File Support
+
+### Supported File Types
+
+- Images: PNG, JPEG, JPG, GIF, WebP, BMP, TIFF
+- Maximum file size: 10MB
 
 ## Security Best Practices
 
--   Use strong, unique passphrases to protect key shares
--   Always store shares separately and securely
--   Never transmit or store unencrypted secret keys
--   Limit proxy access to re-encryption operations only
+- Use strong, unique passphrases for key share protection
+- Store shares in separate secure locations
+- Never transmit or store unencrypted secret keys
+- Implement proper error handling for all operations
+- Use secure channels for share distribution
+- Validate file types and sizes before encryption
+
+## Contributing
+
+We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ## License
 
 MIT License — see [LICENSE](LICENSE) for details.
-
-## Contributions
-
-PRs and issues welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for more info.
