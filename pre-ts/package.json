@@ -1,7 +1,7 @@
 {
     "type": "module",
     "name": "pre-ts",
-    "version": "0.3.0",
+    "version": "0.3.1",
     "description": "TypeScript implementation of Proxy Re-Encryption (PRE)",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -50,5 +50,62 @@
         "!dist/scripts",
         "README.md",
         "LICENSE"
-    ]
+    ],
+    "exports": {
+        ".": {
+            "import": "./dist/index.js",
+            "require": "./dist/index.js",
+            "types": "./dist/index.d.ts"
+        },
+        "./clients": {
+            "import": "./dist/clients/index.js",
+            "require": "./dist/clients/index.js",
+            "types": "./dist/clients/index.d.ts"
+        },
+        "./clients/*": {
+            "import": "./dist/clients/*.js",
+            "require": "./dist/clients/*.js",
+            "types": "./dist/clients/*.d.ts"
+        },
+        "./crypto": {
+            "import": "./dist/crypto/index.js",
+            "require": "./dist/crypto/index.js",
+            "types": "./dist/crypto/index.d.ts"
+        },
+        "./crypto/*": {
+            "import": "./dist/crypto/*.js",
+            "require": "./dist/crypto/*.js",
+            "types": "./dist/crypto/*.d.ts"
+        },
+        "./utils": {
+            "import": "./dist/utils/index.js",
+            "require": "./dist/utils/index.js",
+            "types": "./dist/utils/index.d.ts"
+        },
+        "./utils/*": {
+            "import": "./dist/utils/*.js",
+            "require": "./dist/utils/*.js",
+            "types": "./dist/utils/*.d.ts"
+        },
+        "./shamir": {
+            "import": "./dist/shamir/index.js",
+            "require": "./dist/shamir/index.js",
+            "types": "./dist/shamir/index.d.ts"
+        },
+        "./shamir/*": {
+            "import": "./dist/shamir/*.js",
+            "require": "./dist/shamir/*.js",
+            "types": "./dist/shamir/*.d.ts"
+        },
+        "./types": {
+            "import": "./dist/types/index.js",
+            "require": "./dist/types/index.js",
+            "types": "./dist/types/index.d.ts"
+        },
+        "./types/*": {
+            "import": "./dist/types/*.js",
+            "require": "./dist/types/*.js",
+            "types": "./dist/types/*.d.ts"
+        }
+    }
 }
