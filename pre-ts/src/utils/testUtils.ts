@@ -2,7 +2,7 @@ import fs from "fs";
 import { BN254CurveWrapper, G2Point } from "../crypto/bn254";
 import { base64BufferToBigInt } from "./index";
 import { GTElement } from "../crypto/bn254";
-import { KeyPair, PublicKey, SecretKey } from "../types";
+import { KeyPair, PublicKey, SecretKey } from "../types/keypair";
 import crypto from "crypto";
 // Interface for JSON serialization/deserialization
 interface SerializableKeyPair {

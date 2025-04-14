@@ -1,12 +1,4 @@
-import {
-  SecretKey,
-  PublicKey,
-  FirstLevelEncryptionResponse,
-  SecondLevelEncryptionResponse,
-  SecondLevelSymmetricKey,
-  FirstLevelSymmetricKey,
-  KeyPair,
-} from "./types";
+import { SecretKey, PublicKey, KeyPair } from "./types/keypair";
 import * as utils from "./utils";
 import {
   encryptAESGCM,
@@ -19,11 +11,21 @@ import { BN254CurveWrapper, G1Point, G2Point, GTElement } from "./crypto/bn254";
 import { bn254 } from "@noble/curves/bn254";
 import * as bigintModArith from "bigint-mod-arith";
 import { generateRandomSecretKey } from "./utils/keypair";
+import {
+  FirstLevelEncryptionResponse,
+  FirstLevelSymmetricKey,
+  SecondLevelEncryptionResponse,
+  SecondLevelSymmetricKey,
+} from "./types";
 
 export class PreClient {
   G1: G1Point;
   G2: G2Point;
   Z: GTElement;
+
+  // Maximum size of the file to be uploaded
+  maximumUploadSize: number;
+
   allowedFileTypes: string[] = [
     "image/png",
     "image/jpeg",
@@ -54,6 +56,8 @@ export class PreClient {
     this.G2 = BN254CurveWrapper.G2Generator();
     this.Z = BN254CurveWrapper.pairing(this.G1, this.G2);
 
+    this.maximumUploadSize = 10 * 1024 * 1024; // 10 MB
+
     if (allowedFileTypes) {
       this.allowedFileTypes = allowedFileTypes;
     }
@@ -63,7 +67,6 @@ export class PreClient {
     return BN254CurveWrapper.g2ScalarMul(publicB, secretA);
   }
 
-  /* istanbul ignore next */
   async validate(message: Uint8Array) {
     // Validate magic number
     const fileType = message.slice(0, 4);
@@ -80,10 +83,23 @@ export class PreClient {
       throw new Error("Invalid file type");
     }
 
-    // Validate size
-    const maxSize = 10 * 1024 * 1024; // 10 MB
-    if (message.length > maxSize) {
-      throw new Error("File size exceeds 10 MB");
+    // TODO: move to utils
+    function formatFileSize(bytes: number): string {
+      const MB = 1024 * 1024;
+      const KB = 1024;
+
+      if (bytes >= MB) {
+        return `${(bytes / MB).toFixed(2)} MB`;
+      }
+      if (bytes >= KB) {
+        return `${(bytes / KB).toFixed(2)} KB`;
+      }
+      return `${bytes} bytes`;
+    }
+
+    if (message.length > this.maximumUploadSize) {
+      const readableSize = formatFileSize(this.maximumUploadSize);
+      throw new Error(`File size exceeding the limit of ${readableSize}`);
     }
   }
 
