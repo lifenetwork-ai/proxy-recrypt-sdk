@@ -63,8 +63,8 @@ const decrypted = await client.decryptData(
 const client = new PreSdk();
 
 // Configure share count and threshold if needed
-client.shareCount = 5;  // Generate 5 shares
-client.threshold = 3;   // Need at least 3 shares to reconstruct
+client.shareCount = 3;  // Generate 5 shares
+client.threshold = 2;   // Need at least 3 shares to reconstruct
 
 // Generate shares
 const shares = await client.generateShares();
