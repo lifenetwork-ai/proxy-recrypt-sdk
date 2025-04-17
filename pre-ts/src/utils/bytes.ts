@@ -140,11 +140,16 @@ export function bytesToBase64(bytes: Uint8Array): string {
 
 // Helper function to convert base64 string to Uint8Array
 export function base64ToBytes(base64: string): Uint8Array {
-  const binaryString = atob(base64);
-  const len = binaryString.length;
-  const bytes = new Uint8Array(len);
-  for (let i = 0; i < len; i++) {
-    bytes[i] = binaryString.charCodeAt(i);
+  // Modern browsers
+  if (typeof atob === "function") {
+    const binaryString = atob(base64);
+    const len = binaryString.length;
+    const bytes = new Uint8Array(len);
+    for (let i = 0; i < len; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+    return bytes;
   }
-  return bytes;
+  // Node.js
+  return new Uint8Array(Buffer.from(base64, "base64"));
 }

@@ -2,6 +2,9 @@
 export default {
     preset: "ts-jest",
     testEnvironment: "jsdom",
+    testEnvironmentOptions: {
+        customExportConditions: ["react-native"],
+    },
     extensionsToTreatAsEsm: [".ts", ".tsx"],
     moduleNameMapper: {
         "^(\\.{1,2}/.*)\\.js$": "$1",

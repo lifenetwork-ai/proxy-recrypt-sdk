@@ -9,7 +9,7 @@ import {
   StoreShareRequest,
   UploadFileResponse,
 } from "../types";
-import { bytesToBase64 } from "../utils";
+import { base64ToBytes, bytesToBase64 } from "../utils";
 
 // It provides methods to upload keys, store encrypted data, and retrieve stored files.
 export class DAMClient {
@@ -84,9 +84,7 @@ export class DAMClient {
 
     const result: GetShareResponse = await response.json();
     // Convert the base64 encoded string back to Uint8Array
-    return Uint8Array.from(atob(result.data.shared_key), (c) =>
-      c.charCodeAt(0)
-    );
+    return base64ToBytes(result.data.shared_key);
   }
 
   /**
@@ -103,8 +101,6 @@ export class DAMClient {
     customHeader: HeadersInit = {}
   ): Promise<StoreResponse> {
     const formDataRequest: FormData = new FormData();
-    // Use btoa for base64 encoding of byte arrays
-    // formDataRequest.append("file", new Blob([encryptedData]), "file");
 
     formDataRequest.append(
       "file",
