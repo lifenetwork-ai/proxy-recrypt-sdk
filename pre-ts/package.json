@@ -22,7 +22,6 @@
         "bigint-mod-arith": "^3.3.1",
         "bn.js": "^5.2.1",
         "js-crypto-hkdf": "^1.0.7",
-        "pre-ts": "link:",
         "shamir-secret-sharing": "^0.0.4"
     },
     "devDependencies": {
