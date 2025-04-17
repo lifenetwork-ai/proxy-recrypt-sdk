@@ -37,7 +37,7 @@ export class DAMClient {
     this.baseUrl = baseUrl;
     this.headers["X-Organization-Id"] = organizationId;
     if (authToken) {
-      this.headers["Authorization"] = `Bearer ${authToken}`;
+      this.headers["Authorization"] = `${authToken}`;
     }
   }
 
