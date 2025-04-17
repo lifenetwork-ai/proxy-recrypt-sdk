@@ -1,7 +1,7 @@
 {
     "type": "module",
     "name": "pre-ts",
-    "version": "0.4.2",
+    "version": "0.5.0",
     "description": "TypeScript implementation of Proxy Re-Encryption (PRE)",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -16,10 +16,13 @@
         "node": ">=22.0.0"
     },
     "dependencies": {
+        "@noble/ciphers": "^1.2.1",
         "@noble/curves": "^1.8.1",
+        "@noble/hashes": "^1.7.2",
         "bigint-mod-arith": "^3.3.1",
         "bn.js": "^5.2.1",
         "js-crypto-hkdf": "^1.0.7",
+        "pre-ts": "link:",
         "shamir-secret-sharing": "^0.0.4"
     },
     "devDependencies": {

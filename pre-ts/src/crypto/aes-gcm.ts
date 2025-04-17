@@ -1,6 +1,5 @@
-import { webcrypto } from "crypto";
+import { gcm } from "@noble/ciphers/aes";
 
-const crypto = webcrypto || globalThis.crypto;
 /**
  * Encrypts data using AES-GCM and prepends the nonce to the ciphertext.
  *
@@ -31,32 +30,16 @@ export async function encryptAESGCM(
     nonce = crypto.getRandomValues(new Uint8Array(12));
   }
 
-  // Import key
-  const cryptoKey = await crypto.subtle.importKey(
-    "raw",
-    key,
-    { name: "AES-GCM" },
-    false,
-    ["encrypt"]
-  );
-
-  // Encrypt
-  const ciphertext = await crypto.subtle.encrypt(
-    {
-      name: "AES-GCM",
-      iv: nonce,
-      tagLength: 128,
-    },
-    cryptoKey,
-    message
-  );
+  // Use Noble Ciphers gcm for encryption
+  const cipher = gcm(new Uint8Array(key), nonce);
+  const ciphertext = cipher.encrypt(new Uint8Array(message));
 
   // Combine nonce and ciphertext
-  const result = new Uint8Array(nonce?.length + ciphertext.byteLength);
+  const result = new Uint8Array(nonce.length + ciphertext.length);
   result.set(nonce);
-  result.set(new Uint8Array(ciphertext), nonce.length);
+  result.set(ciphertext, nonce.length);
 
-  return result;
+  return Promise.resolve(result);
 }
 
 /**
@@ -67,7 +50,6 @@ export async function encryptAESGCM(
  * @returns Decrypted data
  * @throws Error if ciphertext is too short or decryption fails
  */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 export async function decryptAESGCM(
   encrypted: Uint8Array,
   key: Uint8Array
@@ -89,28 +71,16 @@ export async function decryptAESGCM(
       ciphertext[i] = encrypted[i + 12];
     }
 
-    // Import key
-    const cryptoKey = await crypto.subtle.importKey(
-      "raw",
-      key,
-      { name: "AES-GCM" },
-      false,
-      ["decrypt"]
-    );
+    // Use Noble Ciphers gcm for decryption
+    const cipher = gcm(key, nonce);
+    const plaintext = cipher.decrypt(ciphertext);
 
-    // Decrypt
-    const plainBuffer = await crypto.subtle.decrypt(
-      {
-        name: "AES-GCM",
-        iv: nonce,
-        tagLength: 128,
-      },
-      cryptoKey,
-      ciphertext
-    );
-
-    return new Uint8Array(plainBuffer);
-  } catch (err: any) {
-    throw new Error(`Decryption failed: ${err.message}`);
+    return Promise.resolve(plaintext);
+  } catch (err: unknown) {
+    if (err instanceof Error) {
+      throw new Error(`Decryption failed: ${err.message}`);
+    }
+    // Handle unexpected errors
+    throw new Error("Decryption failed: Unknown error");
   }
 }
