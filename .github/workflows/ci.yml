@@ -3,10 +3,10 @@ name: Go CI
 on:
     push:
         branches: [main, master]
-        path: "pre-ts/**"
+        path: "pre-go/**"
     pull_request:
         branches: [main, master]
-        path: "pre-ts/**"
+        path: "pre-go/**"
 jobs:
     test-go:
         name: Run tests and collect coverage for Go lib
@@ -20,23 +20,23 @@ jobs:
             - name: Set up Go
               uses: actions/setup-go@v5
               with:
-                  go-version: "1.22"
+                  go-version: "1.23"
                   cache: true
-                  cache-dependency-path: "./go/go.sum"
+                  cache-dependency-path: "./pre-go/go.sum"
 
             - name: Install dependencies
-              working-directory: ./go
+              working-directory: ./pre-go
               run: go mod download
 
             - name: Run tests with coverage
-              working-directory: ./go
+              working-directory: ./pre-go
               run:  go test -coverprofile=coverage.out -covermode=atomic $(go list ./... | grep -v "/mocks" | grep -v "/testutils")
 
             - name: Upload coverage to Codecov
               uses: codecov/codecov-action@v5
               with:
                   token: ${{ secrets.CODECOV_TOKEN }}
-                  files: ./go/coverage.out
+                  files: ./pre-go/coverage.out
                   flags: go
                   fail_ci_if_error: true
     golangci:
@@ -48,13 +48,13 @@ jobs:
             - name: Set up Go
               uses: actions/setup-go@v5
               with:
-                  go-version: "1.22"
+                  go-version: "1.23"
                   cache: true
 
             - name: golangci-lint
               uses: golangci/golangci-lint-action@v6
               with:
-                  working-directory: ./go
+                  working-directory: ./pre-go
                   version: v1.60.3
                   args: --timeout=5m
 
