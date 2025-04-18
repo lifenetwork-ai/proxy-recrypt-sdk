@@ -91,14 +91,14 @@ type PreProxy interface {
 	// ReEncryption transforms a second-level ciphertext to a first-level one
 	// Takes a second-level encrypted key and a re-encryption key
 	// Returns a first-level encrypted key
-	ReEncryption(encryptedKey *SecondLevelSymmetricKey, reKey *bn254.G2Affine) *FirstLevelSymmetricKey
+	ReEncryption(encryptedKey *SecondLevelSymmetricKey, reKey *ReencryptionKey) *FirstLevelSymmetricKey
 }
 
 type PreClient interface {
 	// GenerateReEncryptionKey creates a re-encryption key for A->B transformation
 	// Takes a portion of secret key from A and a portion of public key from B
 	// Returns a point in the G2 group
-	GenerateReEncryptionKey(secretA *SecretKey, publicB *PublicKey) *bn254.G2Affine
+	GenerateReEncryptionKey(secretA *SecretKey, publicB *PublicKey) *ReencryptionKey
 
 	// SecondLevelEncryption encrypts a message m under a public key
 	// Returns the encrypted symmetric key and the encrypted message

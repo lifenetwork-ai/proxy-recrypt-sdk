@@ -27,7 +27,7 @@ func NewClient(params types.SystemParams) types.PreClient {
 // GenerateReEncryptionKey generates a re-encryption key indicate A->B relation for the PRE scheme.
 // It takes the a portion of secret key of A and a portion of public key of B as input.
 // The re-encryption key is a point in G1 group.
-func (p *preClient) GenerateReEncryptionKey(secretA *types.SecretKey, publicB *types.PublicKey) *bn254.G2Affine {
+func (p *preClient) GenerateReEncryptionKey(secretA *types.SecretKey, publicB *types.PublicKey) *types.ReencryptionKey {
 	return new(bn254.G2Affine).ScalarMultiplication(publicB.Second, secretA.First)
 }
 
@@ -36,7 +36,7 @@ func (p *preClient) GenerateReEncryptionKey(secretA *types.SecretKey, publicB *t
 // It takes the public key of A, a portion of secret key of B, the message m and a random scalar as input.
 // The scalar is used to randomize the encryption, should not be reused in other sessions.
 // It returns the ciphertext in the form of a pair of points in G1 and GT groups.
-func (p *preClient) SecondLevelEncryption(secretA *types.SecretKey, message string, scalar *big.Int) (*types.SecondLevelSymmetricKey, []byte, error) {
+func (p *preClient) SecondLevelEncryption(secretA *types.SecretKey, message string, scalar *types.Scalar) (*types.SecondLevelSymmetricKey, []byte, error) {
 	// check if scalar is in the correct range
 	if scalar.Cmp(bn254.ID.ScalarField()) >= 0 {
 		return nil, nil, fmt.Errorf("scalar is out of range")
@@ -50,7 +50,6 @@ func (p *preClient) SecondLevelEncryption(secretA *types.SecretKey, message stri
 
 	// encrypt the message
 	encryptedMessage, err := crypto.EncryptAESGCM([]byte(message), key, nil)
-
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to encrypt message: %v", err)
 	}
@@ -106,7 +105,6 @@ func (p *preClient) decryptFirstLevelKey(encryptedKey *types.FirstLevelSymmetric
 	symmetricKeyGT := new(bn254.GT).Div(encryptedKey.Second, temp)
 
 	symmetricKey, err := utils.DeriveKeyFromGT(symmetricKeyGT, 32)
-
 	if err != nil {
 		return nil, fmt.Errorf("failed to derive key: %v", err)
 	}
@@ -124,7 +122,6 @@ func (p *preClient) decryptSecondLevelKey(encryptedKey *types.SecondLevelSymmetr
 
 	symmetricKeyGT := new(bn254.GT).Div(encryptedKey.Second, new(bn254.GT).Exp(temp, secretKey.First))
 	symmetricKey, err := utils.DeriveKeyFromGT(symmetricKeyGT, 32)
-
 	if err != nil {
 		return nil, fmt.Errorf("failed to derive key: %v", err)
 	}
