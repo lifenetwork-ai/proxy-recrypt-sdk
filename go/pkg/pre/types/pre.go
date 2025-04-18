@@ -7,6 +7,6 @@ import (
 )
 
 type (
-	ReencryptionKey = bn254.G2Affine
+	ReEncryptionKey = bn254.G2Affine
 	Scalar          = big.Int
 )

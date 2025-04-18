@@ -27,7 +27,7 @@ func NewClient(params types.SystemParams) types.PreClient {
 // GenerateReEncryptionKey generates a re-encryption key indicate A->B relation for the PRE scheme.
 // It takes the a portion of secret key of A and a portion of public key of B as input.
 // The re-encryption key is a point in G1 group.
-func (p *preClient) GenerateReEncryptionKey(secretA *types.SecretKey, publicB *types.PublicKey) *types.ReencryptionKey {
+func (p *preClient) GenerateReEncryptionKey(secretA *types.SecretKey, publicB *types.PublicKey) *types.ReEncryptionKey {
 	return new(bn254.G2Affine).ScalarMultiplication(publicB.Second, secretA.First)
 }
 
