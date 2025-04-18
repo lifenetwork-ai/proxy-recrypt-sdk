@@ -97,6 +97,7 @@ export class DAMClient {
    */
   async storeFile(
     encryptedData: Uint8Array,
+    encryptedSymmetricKey: Uint8Array,
     filename?: string,
     customHeader: HeadersInit = {}
   ): Promise<StoreResponse> {
@@ -106,6 +107,11 @@ export class DAMClient {
       "file",
       new Blob([encryptedData]),
       Date.now().toString() + "_encrypted_file" + ".enc"
+    );
+
+    formDataRequest.append(
+      "encrypted_symmetric_key",
+      bytesToBase64(encryptedSymmetricKey)
     );
 
     const response = await fetch(
