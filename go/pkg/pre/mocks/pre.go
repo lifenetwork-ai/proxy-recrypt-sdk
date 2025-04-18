@@ -5,11 +5,11 @@ import (
 	"math/big"
 
 	"github.com/consensys/gnark-crypto/ecc/bn254"
-	"github.com/tuantran-genetica/human-network-crypto-lib/pkg/crypto"
-	"github.com/tuantran-genetica/human-network-crypto-lib/pkg/pre"
-	"github.com/tuantran-genetica/human-network-crypto-lib/pkg/pre/types"
-	"github.com/tuantran-genetica/human-network-crypto-lib/pkg/pre/utils"
-	"github.com/tuantran-genetica/human-network-crypto-lib/pkg/testutils"
+	"github.com/tuantran-genetica/human-network-pre-lib/pre-go/pkg/crypto"
+	"github.com/tuantran-genetica/human-network-pre-lib/pre-go/pkg/pre"
+	"github.com/tuantran-genetica/human-network-pre-lib/pre-go/pkg/pre/types"
+	"github.com/tuantran-genetica/human-network-pre-lib/pre-go/pkg/pre/utils"
+	"github.com/tuantran-genetica/human-network-pre-lib/pre-go/pkg/testutils"
 )
 
 type MockPreScheme struct {

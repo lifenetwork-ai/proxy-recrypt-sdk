@@ -6,8 +6,8 @@ import (
 	"os"
 
 	"github.com/consensys/gnark-crypto/ecc/bn254"
-	"github.com/tuantran-genetica/human-network-crypto-lib/pkg/pre/types"
-	"github.com/tuantran-genetica/human-network-crypto-lib/pkg/pre/utils"
+	"github.com/tuantran-genetica/human-network-pre-lib/pre-go/pkg/pre/types"
+	"github.com/tuantran-genetica/human-network-pre-lib/pre-go/pkg/pre/utils"
 )
 
 func LoadReKey(aliceKeypair, bobKeypair *types.KeyPair, client types.PreClient) *bn254.G2Affine {

@@ -8,8 +8,8 @@ import (
 	"os"
 
 	"github.com/consensys/gnark-crypto/ecc/bn254"
-	"github.com/tuantran-genetica/human-network-crypto-lib/pkg/pre/types"
-	"github.com/tuantran-genetica/human-network-crypto-lib/pkg/pre/utils"
+	"github.com/tuantran-genetica/human-network-pre-lib/pre-go/pkg/pre/types"
+	"github.com/tuantran-genetica/human-network-pre-lib/pre-go/pkg/pre/utils"
 )
 
 // SerializableKeyPair represents a serializable version of KeyPair
@@ -52,7 +52,7 @@ func SaveKeyPairToFile(filename string) error {
 	}
 
 	// Write to file
-	err = os.WriteFile(filename, jsonData, 0600)
+	err = os.WriteFile(filename, jsonData, 0o600)
 	if err != nil {
 		return fmt.Errorf("failed to write keypair to file: %v", err)
 	}

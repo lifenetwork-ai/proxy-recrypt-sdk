@@ -8,8 +8,8 @@ import (
 	"os"
 
 	"github.com/consensys/gnark-crypto/ecc/bn254"
-	"github.com/tuantran-genetica/human-network-crypto-lib/pkg/pre/types"
-	"github.com/tuantran-genetica/human-network-crypto-lib/pkg/pre/utils"
+	"github.com/tuantran-genetica/human-network-pre-lib/pre-go/pkg/pre/types"
+	"github.com/tuantran-genetica/human-network-pre-lib/pre-go/pkg/pre/utils"
 )
 
 // generateSystemParameters returns the system parameters for pairing-based cryptography:
@@ -97,11 +97,12 @@ func GenerateRandomString(length int) string {
 	// Convert to hex string and trim to exact length
 	return hex.EncodeToString(bytes)[:length]
 }
+
 func WriteAsBase64IfNotExists(filename string, data []byte) error {
 	_, err := os.Stat(filename)
 	if os.IsNotExist(err) {
 		base64Form := base64.StdEncoding.EncodeToString(data)
-		return os.WriteFile(filename, []byte(base64Form), 0600)
+		return os.WriteFile(filename, []byte(base64Form), 0o600)
 	}
 	return nil
 }

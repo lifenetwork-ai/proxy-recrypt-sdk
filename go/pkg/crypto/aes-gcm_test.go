@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"github.com/tuantran-genetica/human-network-crypto-lib/pkg/crypto"
+	"github.com/tuantran-genetica/human-network-pre-lib/pre-go/pkg/crypto"
 )
 
 func TestAESGCM(t *testing.T) {

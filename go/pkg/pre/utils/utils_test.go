@@ -7,8 +7,8 @@ import (
 
 	"github.com/consensys/gnark-crypto/ecc/bn254"
 	"github.com/stretchr/testify/require"
-	"github.com/tuantran-genetica/human-network-crypto-lib/pkg/pre/utils"
-	"github.com/tuantran-genetica/human-network-crypto-lib/pkg/testutils"
+	"github.com/tuantran-genetica/human-network-pre-lib/pre-go/pkg/pre/utils"
+	"github.com/tuantran-genetica/human-network-pre-lib/pre-go/pkg/testutils"
 )
 
 func TestUtilityFunctions(t *testing.T) {
@@ -23,7 +23,7 @@ func TestUtilityFunctions(t *testing.T) {
 	t.Run("WriteAsBase64IfNotExists with existing file", func(t *testing.T) {
 		tmpFile := filepath.Join(t.TempDir(), "test.txt")
 		originalData := []byte("original")
-		require.NoError(t, os.WriteFile(tmpFile, originalData, 0600))
+		require.NoError(t, os.WriteFile(tmpFile, originalData, 0o600))
 
 		newData := []byte("new")
 		err := testutils.WriteAsBase64IfNotExists(tmpFile, newData)

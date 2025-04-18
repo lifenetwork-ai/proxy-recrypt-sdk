@@ -1,18 +1,16 @@
 package main
 
 import (
+	"encoding/base64"
 	"net/http"
 	"sync"
-
 	"time"
-
-	"encoding/base64"
 
 	"github.com/consensys/gnark-crypto/ecc/bn254"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"github.com/tuantran-genetica/human-network-crypto-lib/pkg/pre"
-	"github.com/tuantran-genetica/human-network-crypto-lib/pkg/pre/types"
+	"github.com/tuantran-genetica/human-network-pre-lib/pre-go/pkg/pre"
+	"github.com/tuantran-genetica/human-network-pre-lib/pre-go/pkg/pre/types"
 )
 
 // StoredData represents the data stored in memory
